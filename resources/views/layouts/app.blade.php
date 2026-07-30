@@ -35,6 +35,7 @@
                 <a href="{{ route('dashboard') }}">Dashboard</a>
                 @if(auth()->user()->isOwner())
                     <a href="{{ route('owner.users.index') }}">User Accounts</a>
+                    <a href="{{ route('devices.index') }}">Devices</a>
                 @endif
                 @if(auth()->user()->isOwner() || auth()->user()->isStaff())
                     <a href="{{ route('kitchens.index') }}">Kitchens</a>

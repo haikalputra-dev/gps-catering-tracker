@@ -4,8 +4,10 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryController;
+use App\Http\Controllers\Device\DeviceController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\Owner\UserController as OwnerUserController;
+use App\Http\Controllers\Telemetry\TelemetryController;
 use App\Http\Controllers\TrackingController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -60,6 +62,23 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::put('/{user}', [OwnerUserController::class, 'update'])->name('update');
     });
 
+    // Owner-only physical device registration and binding management.
+    // Devices are never deleted (AR-50); deactivation is the disable
+    // path. Token rotation and courier assignment are separate POST
+    // actions rather than being folded into `update` so audit intent
+    // is unambiguous.
+    Route::middleware('role:owner')->prefix('devices')->name('devices.')->group(function (): void {
+        Route::get('/', [DeviceController::class, 'index'])->name('index');
+        Route::get('/create', [DeviceController::class, 'create'])->name('create');
+        Route::post('/', [DeviceController::class, 'store'])->name('store');
+        Route::get('/{device}', [DeviceController::class, 'show'])->name('show');
+        Route::get('/{device}/edit', [DeviceController::class, 'edit'])->name('edit');
+        Route::put('/{device}', [DeviceController::class, 'update'])->name('update');
+        Route::post('/{device}/rotate-token', [DeviceController::class, 'rotateToken'])->name('rotate-token');
+        Route::post('/{device}/assign', [DeviceController::class, 'assign'])->name('assign');
+        Route::post('/{device}/unassign', [DeviceController::class, 'unassign'])->name('unassign');
+    });
+
     Route::middleware('role:owner,staff')->prefix('kitchens')->name('kitchens.')->group(function (): void {
         Route::get('/', [KitchenController::class, 'index'])->name('index');
         Route::get('/create', [KitchenController::class, 'create'])->name('create');
@@ -106,3 +125,14 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         });
     });
 });
+
+// Device-authenticated telemetry ingestion (AR-49, AR-52). No web
+// session is involved: the `device.auth` middleware resolves the
+// Bearer token from `Authorization` and attaches the Device to the
+// request; the named `telemetry` rate limiter keys off that same
+// Device so per-device quotas are enforced independently of client
+// IP. Exceptions bubble as JSON because `bootstrap/app.php` matches
+// on `api/*`.
+Route::post('/api/telemetry', [TelemetryController::class, 'store'])
+    ->middleware(['device.auth', 'throttle:telemetry'])
+    ->name('api.telemetry.store');

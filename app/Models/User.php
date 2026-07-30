@@ -47,4 +47,42 @@ class User extends Authenticatable
     {
         return $this->role === UserRole::Courier;
     }
+
+    /**
+     * All device assignments for this user, regardless of status.
+     *
+     * Only couriers should ever have rows here; the assignment service
+     * enforces that at open time. Kept as a plain `hasMany` so admin
+     * screens can render history for any user without a role filter.
+     */
+    public function deviceAssignments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\DeviceAssignment::class, 'courier_id');
+    }
+
+    /**
+     * The currently-open device assignment for this courier, if any.
+     *
+     * A courier has at most one open assignment (AR-50). The relation
+     * filters on `unassigned_at IS NULL` so `->currentDeviceAssignment`
+     * is either the active row or `null`.
+     */
+    public function currentDeviceAssignment(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this
+            ->hasOne(\App\Models\DeviceAssignment::class, 'courier_id')
+            ->whereNull('unassigned_at')
+            ->latestOfMany('assigned_at');
+    }
+
+    /**
+     * Convenience accessor: the Device this courier is currently bound
+     * to (if any), or `null`. Uses the open assignment as the source.
+     */
+    public function currentDevice(): ?\App\Models\Device
+    {
+        $assignment = $this->currentDeviceAssignment;
+
+        return $assignment?->device;
+    }
 }

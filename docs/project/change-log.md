@@ -4,6 +4,103 @@ Chronological, human-readable summary of application-visible changes.
 For code diffs see `git log`. For rationale see the decision log and
 the ADRs.
 
+## 2026-07-30 - Packet 11 - Device registration and telemetry ingestion
+
+### Added
+
+- Three migrations: `devices` (label, serial_number, hardware_model,
+  is_active, api_token, last_seen_at), `device_assignments` (append
+  -only 1:1 binding history with `assigned_at`/`unassigned_at` and
+  actor columns), and `telemetry_records` (device_id, delivery_id,
+  courier_id, lat/lng, accuracy, speed, heading, battery,
+  gps_timestamp, received_at).
+- `App\Domain\Device\ApiTokenGenerator`: 40-char (configurable)
+  Bearer tokens drawn from `A-Za-z0-9` (configurable) using
+  `random_bytes`, with retry on collision.
+- `App\Domain\Device\DeviceAssignmentService`: transactional 1:1
+  binding with courier role/active assertions, idempotent same
+  -courier re-assign, cross-device courier conflict throws
+  `CourierAlreadyBoundException`, and deactivation-triggered
+  auto-close.
+- `App\Domain\Device\TelemetryPayload` + `TelemetryIngester`:
+  UTC normalization on `gps_timestamp`, delivery attribution
+  through the device's current courier binding, accept-and-discard
+  when no active delivery exists, `devices.last_seen_at` bumped on
+  every accepted call.
+- `App\Http\Middleware\AuthenticateDeviceToken` (alias
+  `device.auth`): Bearer parsing, `hash_equals` comparison against
+  `devices.api_token`, active-device gate, uniform
+  `401 { "message": "Unauthorized." }` for every failure mode.
+- `App\Http\Controllers\Device\DeviceController`: nine owner-only
+  actions (index, create, store, show, edit, update, rotateToken,
+  assign, unassign).
+- `App\Http\Controllers\Telemetry\TelemetryController::store`:
+  delegates to the ingester and returns `204` for both persisted
+  and discarded outcomes.
+- Nine web routes under `role:owner` (`devices.*`), plus one API
+  route `POST /api/telemetry` (name `api.telemetry.store`) with
+  middleware `['device.auth', 'throttle:telemetry']`.
+- `config/telemetry.php`: `retention_days` (default 30),
+  `max_submissions_per_minute` (default 60), `token_length`
+  (default 40), `token_alphabet` (alphanumeric).
+- `bootstrap/app.php`: registers the `device.auth` alias, the
+  named `telemetry` rate limiter (`device:{id}` key with `ip:{ip}`
+  fallback), and pins `AuthenticateDeviceToken` above
+  `ThrottleRequests` in the priority list.
+
+### Behavior notes
+
+- Tokens are stored plaintext (AR-47 revised) and compared with
+  `hash_equals`. The plaintext value is shown once at creation
+  and once at rotation; the details page shows a masked last-four
+  preview.
+- Devices are never deleted. Deactivation (`is_active = 0`)
+  auto-closes any open assignment with note "device deactivated"
+  and immediately invalidates the device's Bearer token.
+- One device binds to one courier at a time; one courier binds to
+  one device at a time. Full history lives on
+  `device_assignments`.
+- Rate limiting is per authenticated device, not per IP. Two
+  devices behind the same egress IP have independent quotas.
+- Telemetry submissions that arrive while the bound courier has
+  no `scheduled` or `in_transit` delivery are accepted and
+  discarded (`204`, no row written), but still bump
+  `last_seen_at`. Persisted rows always carry a non-null
+  `delivery_id`.
+- No admin, public, or JSON read surface for `telemetry_records`
+  is introduced. A retention purge worker is deferred to a later
+  packet.
+
+### Tests
+
+- 66 new tests / 198 new assertions across
+  `tests/Unit/Domain/Device/ApiTokenGeneratorTest.php`,
+  `tests/Unit/Domain/Device/DeviceAssignmentServiceTest.php`,
+  `tests/Unit/Domain/Device/TelemetryIngesterTest.php`,
+  `tests/Feature/Device/DeviceManagementTest.php`,
+  `tests/Feature/Device/DeviceAssignmentTest.php`,
+  `tests/Feature/Telemetry/TelemetryAuthenticationTest.php`,
+  `tests/Feature/Telemetry/TelemetryIngestionTest.php`, and
+  `tests/Feature/Telemetry/TelemetryRateLimitTest.php`.
+- `TelemetryRateLimitTest::test_rate_limit_is_scoped_per_device`
+  asserts the middleware-priority pin: two devices sharing egress
+  conditions have independent quotas.
+
+### Decisions
+
+- Applies AR-47 (revised): plaintext token storage with
+  `hash_equals`; 40-char alphanumeric alphabet; single-shot
+  display at issue and rotation.
+- Applies AR-48: 30-day retention default; purge worker deferred.
+- Applies AR-49: 60/minute per-device rate limit via a named
+  `telemetry` limiter keyed on `device:{id}`.
+- Applies AR-50: 1:1 exclusive binding with full history in
+  `device_assignments`; devices never deleted.
+- Applies AR-51: accept-and-discard when no active delivery;
+  `last_seen_at` bumped on every accepted call.
+- Applies AR-52: Packet 11 scope envelope; nine web routes plus
+  one API route; response contract `204/401/422/429`.
+
 ## 2026-07-30 - Packet 10 - Customer delivery tracking
 
 ### Added
