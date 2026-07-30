@@ -6,6 +6,7 @@ Scope baseline: Approved
 VPS audit: Complete
 Laravel initialization: Complete
 MySQL runtime integration: Complete
+Identity & access (owner/staff/courier auth): Complete
 Domain implementation: Not started
 Frontend implementation: Not started
 Firmware implementation: Not started

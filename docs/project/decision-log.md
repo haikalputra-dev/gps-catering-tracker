@@ -20,6 +20,11 @@ complements the ADRs under `docs/decisions/`.
 | AR-13 | Application timezone is Asia/Jakarta. | Approved |
 | AR-14 | No production feature implemented before its specific task packet. | Approved |
 | AR-15 | Runtime baseline: Laravel 13, PHP 8.3.32, MySQL 8.0.46 (see ADR-001). | Approved |
+| AR-16 | Role-based session auth: owner/staff/courier on default `web` guard, custom `role` column, no permission package (see ADR-007). | Approved |
+| AR-17 | Initial owner is created only via the `app:create-owner` Artisan command with hidden password prompts; no CLI password arguments. | Approved |
+| AR-18 | Owner accounts cannot be created, edited, demoted or deactivated through the web UI. | Approved |
+| AR-19 | No permanent user delete route; account lifecycle is managed via `is_active` only. | Approved |
+| AR-20 | Login errors are generic and rate-limited at 5 attempts / 60s per email+IP. | Approved |
 
 ## Explicit Rejections and Constraints
 

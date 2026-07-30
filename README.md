@@ -2,8 +2,10 @@
 
 ## Status
 
-**Initialization only.** This repository contains a freshly initialized Laravel
-13 baseline. No business feature has been implemented yet. All functional
+**Authentication baseline.** The repository ships a Laravel 13 baseline, a
+MySQL runtime, and (as of Packet 04) role-based session authentication with
+three roles: owner, staff and courier. No kitchen, delivery, tracking, device,
+pricing or customer feature is implemented yet. All remaining functional
 components are placeholders pending their specific approved task packets.
 
 ## Objective
@@ -34,7 +36,13 @@ cp .env.example .env
 php artisan key:generate
 # Configure MySQL DB_* variables in .env, then:
 php artisan migrate
+# Provision the first owner account (interactive, hidden password prompt):
+php artisan app:create-owner --name="Owner Name" --email="owner@example.test"
 ```
+
+The `app:create-owner` command is the ONLY way to create the initial owner
+account. The web UI cannot create owners. See
+`docs/authentication/initial-owner-command.md`.
 
 `.env.example` still advertises SQLite as the portable default so fresh clones
 boot without MySQL. On this VPS, `.env` is configured for MySQL per
@@ -79,10 +87,21 @@ Each contains only a `.gitkeep`. Standard Laravel HTTP controllers and
 presentation logic remain under the conventional Laravel directories. See
 `docs/architecture/project-structure.md`.
 
+## Authentication and Roles
+
+Three account roles exist: `owner`, `staff`, `courier`. The default `web`
+guard uses the database session driver. See:
+
+- `docs/authentication/role-access.md` - what each role may do.
+- `docs/authentication/initial-owner-command.md` - initial owner setup.
+- `docs/decisions/ADR-007-role-based-session-authentication.md` - rationale.
+- `docs/requirements/identity-access-requirements.md` - requirement matrix.
+
 ## No Business Feature Implemented
 
-This baseline implements **no** kitchen, delivery, user-role, tracking,
-Haversine, pricing, SMS, or IoT feature. Do not treat any component as complete.
+Beyond authentication, this baseline implements **no** kitchen, delivery,
+tracking, Haversine, pricing, SMS, or IoT feature. Do not treat any component
+as complete.
 
 ## Separate Project Warning
 

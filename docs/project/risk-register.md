@@ -16,6 +16,11 @@ progresses.
 | R-07 | SIM800L 2G coverage must be tested with Telkomsel. | Medium | Field test required before relying on GPRS telemetry. |
 | R-08 | Public OpenStreetMap tile usage has availability/fair-use limits. | Medium | Configurable tile URL; respect attribution and usage policy. |
 | R-09 | One-month retention cleanup is not yet implemented. | Medium | Retention/cleanup job to be added in a later packet. |
+| R-12 | Initial owner account exists only after `app:create-owner` is run; skipping it leaves the site un-loginable. | Medium | Documented in `docs/authentication/initial-owner-command.md`; add to deployment checklist. Command creates an active owner in one step. |
+| R-13 | No self-service password reset. An owner who forgets their password cannot recover it through the UI. | Medium | Mitigated by running `app:create-owner` again on the host to create/replace credentials; enterprise reset flow deferred to a later packet. |
+| R-14 | Session fixation and CSRF hardening rely on framework defaults plus explicit regeneration on login/logout. | Medium | Verified by `LoginTest::test_successful_login_regenerates_session_id` and logout tests; revisit if `SESSION_*` settings change. |
+| R-15 | Rate-limit key is `email + IP`; a shared NAT can spread attempts across users and slightly weaken throttling. | Low | Accepted for LAN deployment; move to `email` or `email + user-agent` key if abuse is observed. |
+| R-16 | Owner role is only prevented from being set through code paths (enum, form request, controller guard). A future contributor could bypass by adding a raw update. | Medium | Enforced in three layers; `UserManagementUpdateTest::test_owner_cannot_be_edited_through_crafted_request` guards against regression. |
 
 ## Notes
 
