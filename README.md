@@ -2,18 +2,23 @@
 
 ## Status
 
-**Delivery pricing.** The repository ships a Laravel 13 baseline, a MySQL
-runtime, role-based session authentication (Packet 04), kitchen management
-with a Leaflet-based coordinate picker (Packet 05), customer management for
-owner and staff with the same map picker and an active/inactive lifecycle
-(Packet 06), delivery orders with a five-state lifecycle, `draft ->
-scheduled` and `draft/scheduled -> cancelled` transitions, receipt-number
-generation, kitchen and customer snapshots captured at scheduling, and a
-configurable concurrency cap (default 1, Packet 07), and (as of Packet 08)
-a frozen straight-line Haversine `distance_km` and rupiah `fee_rupiah`
-captured at scheduling and preserved on cancellation. No tracking, device,
-courier, or SMS feature is implemented yet. All remaining functional
-components are placeholders pending their specific approved task packets.
+**Delivery courier lifecycle.** The repository ships a Laravel 13 baseline,
+a MySQL runtime, role-based session authentication (Packet 04), kitchen
+management with a Leaflet-based coordinate picker (Packet 05), customer
+management for owner and staff with the same map picker and an
+active/inactive lifecycle (Packet 06), delivery orders with a five-state
+lifecycle, `draft -> scheduled` and `draft/scheduled -> cancelled`
+transitions, receipt-number generation, kitchen and customer snapshots
+captured at scheduling, and a configurable concurrency cap (default 1,
+Packet 07), a frozen straight-line Haversine `distance_km` and rupiah
+`fee_rupiah` captured at scheduling and preserved on cancellation
+(Packet 08), and (as of Packet 09) courier assignment at scheduling,
+courier-initiated `scheduled -> in_transit -> delivered` taps, mid-route
+cancellation from `in_transit`, a per-courier concurrency cap, a
+functional courier dashboard, and fee-privacy hiding fee and distance
+from courier-facing surfaces. No tracking, device, or SMS feature is
+implemented yet. All remaining functional components are placeholders
+pending their specific approved task packets.
 
 ## Objective
 
@@ -85,7 +90,9 @@ npm run dev        # development / watch
 app/Domain/Kitchen      Kitchen code normalizer (Packet 05)
 app/Domain/Customer     Customer phone normalizer (Packet 06)
 app/Domain/Delivery     Delivery state machine, scheduler, canceller,
-                        receipt generator, and typed exceptions (Packet 07)
+                        dispatcher, completer, distance and pricing
+                        calculators, receipt generator, and typed
+                        exceptions (Packets 07-09)
 app/Domain/Tracking     Domain concepts for tracking (placeholder)
 app/Domain/Device       Domain concepts for devices (placeholder)
 app/Application         Use-case orchestration (placeholder)
@@ -110,12 +117,13 @@ guard uses the database session driver. See:
 
 Owner and staff can create delivery drafts, schedule them, and cancel them.
 Scheduling generates a receipt of the form `DEL-YYYYMMDD-XXXX`, captures
-kitchen and customer snapshots atomically, and enforces a configurable
-concurrency cap (`DELIVERY_MAX_CONCURRENT_ACTIVE`, default 1). Cancelled
-scheduled deliveries preserve their receipt and snapshots. Couriers cannot
-access the delivery surface yet. See `docs/deliveries/*` for the operator
-workflow, state machine, receipt format, snapshot rules, and concurrency
-policy.
+kitchen and customer snapshots atomically, binds an active courier to the
+delivery, and enforces two configurable concurrency caps
+(`DELIVERY_MAX_CONCURRENT_ACTIVE` and
+`DELIVERY_MAX_CONCURRENT_PER_COURIER`, both default 1). Cancelled
+scheduled deliveries preserve their receipt and snapshots. See
+`docs/deliveries/*` for the operator workflow, state machine, receipt
+format, snapshot rules, and concurrency policy.
 
 ## Delivery Distance and Fee
 
@@ -130,9 +138,27 @@ configurable via `PRICING_MINIMUM_FEE_RUPIAH`,
 `docs/deliveries/pricing-and-distance.md` and
 `docs/decisions/ADR-013-haversine-and-fee-formula.md`.
 
-Not yet implemented: courier assignment, `in_transit` and `delivered`
-transitions, tracking, SMS, or IoT features. Do not treat these as
-complete.
+## Delivery Courier Lifecycle
+
+Scheduling assigns an active courier (`role = 'courier'`, not deactivated)
+to the delivery and stamps `courier_id`. The assigned courier can then
+tap `Start Delivery` to transition `scheduled -> in_transit` (stamping
+`dispatched_at`) and later tap `Mark Delivered` to transition
+`in_transit -> delivered` (stamping `delivered_at`). Cancellation is
+permitted from `draft`, `scheduled`, or `in_transit`; owner and staff may
+cancel any non-terminal delivery, while a courier may cancel only their
+own `in_transit` delivery. Couriers see a dedicated dashboard listing
+their single active delivery (per the per-courier cap) and never see the
+`fee_rupiah` or `distance_km` fields on any surface. See
+`docs/deliveries/courier-assignment.md`,
+`docs/deliveries/dispatch-and-completion.md`,
+`docs/deliveries/mid-route-cancellation.md`,
+`docs/deliveries/courier-visibility-and-fee-privacy.md`,
+`docs/decisions/ADR-014-courier-assignment-and-per-courier-limit.md`,
+and `docs/decisions/ADR-015-dispatch-and-completion-via-manual-taps.md`.
+
+Not yet implemented: tracking, SMS, or IoT features. Do not treat these
+as complete.
 
 ## Separate Project Warning
 

@@ -18,11 +18,15 @@ class DeliveryConcurrencyLimitTest extends TestCase
 
     private function draft(User $owner): Delivery
     {
+        // AR-37: a scheduled delivery must have an active courier. These
+        // tests exercise the *cap* rather than the courier check, so we
+        // pre-assign a fresh courier per draft.
         return Delivery::factory()
             ->for(Kitchen::factory(), 'kitchen')
             ->for(Customer::factory(), 'customer')
             ->create([
                 'created_by_user_id' => $owner->id,
+                'courier_id' => User::factory()->courier()->create()->id,
                 'scheduled_at' => now()->addHours(3),
             ]);
     }

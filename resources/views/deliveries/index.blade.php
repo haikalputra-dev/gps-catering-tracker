@@ -42,6 +42,7 @@
                         <th>Status</th>
                         <th>Kitchen</th>
                         <th>Customer</th>
+                        <th>Courier</th>
                         <th>Scheduled ({{ $displayTz }})</th>
                         <th>Fee</th>
                         <th>Created</th>
@@ -72,6 +73,13 @@
                                     {{ $delivery->customer?->name }}
                                 @else
                                     {{ $delivery->customer_name }}
+                                @endif
+                            </td>
+                            <td>
+                                @if($delivery->courier)
+                                    {{ $delivery->courier->name }}
+                                @else
+                                    <span class="placeholder">—</span>
                                 @endif
                             </td>
                             <td>

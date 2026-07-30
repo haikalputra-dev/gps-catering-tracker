@@ -5,14 +5,25 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domain\Delivery\DeliveryCanceller;
+use App\Domain\Delivery\DeliveryCompleter;
+use App\Domain\Delivery\DeliveryDispatcher;
 use App\Domain\Delivery\DeliveryScheduler;
 use App\Domain\Delivery\DeliveryStatus;
 use App\Domain\Delivery\Exceptions\ConcurrencyLimitReachedException;
+use App\Domain\Delivery\Exceptions\CourierConcurrencyLimitReachedException;
+use App\Domain\Delivery\Exceptions\CourierNotCourierRoleException;
+use App\Domain\Delivery\Exceptions\InactiveCourierException;
 use App\Domain\Delivery\Exceptions\InactiveCustomerException;
 use App\Domain\Delivery\Exceptions\InactiveKitchenException;
+use App\Domain\Delivery\Exceptions\MissingCourierException;
 use App\Domain\Delivery\Exceptions\MissingSchedulingFieldsException;
+use App\Domain\Delivery\Exceptions\NotAssignedCourierException;
+use App\Domain\Delivery\Exceptions\NotAuthorizedToCancelException;
 use App\Domain\Delivery\Exceptions\NotCancellableStateException;
+use App\Domain\Delivery\Exceptions\NotCompletableStateException;
+use App\Domain\Delivery\Exceptions\NotDispatchableStateException;
 use App\Domain\Delivery\Exceptions\NotSchedulableStateException;
+use App\Domain\Identity\UserRole;
 use App\Http\Requests\Delivery\CancelDeliveryRequest;
 use App\Http\Requests\Delivery\ScheduleDeliveryRequest;
 use App\Http\Requests\Delivery\StoreDeliveryRequest;
@@ -20,6 +31,7 @@ use App\Http\Requests\Delivery\UpdateDeliveryRequest;
 use App\Models\Customer;
 use App\Models\Delivery;
 use App\Models\Kitchen;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +44,8 @@ class DeliveryController extends Controller
     public function __construct(
         private readonly DeliveryScheduler $scheduler,
         private readonly DeliveryCanceller $canceller,
+        private readonly DeliveryDispatcher $dispatcher,
+        private readonly DeliveryCompleter $completer,
     ) {
     }
 
@@ -81,6 +95,7 @@ class DeliveryController extends Controller
             'delivery' => new Delivery(),
             'kitchens' => Kitchen::query()->active()->orderBy('name')->get(),
             'customers' => Customer::query()->active()->orderBy('name')->get(),
+            'couriers' => $this->activeCouriers(),
         ]);
     }
 
@@ -97,11 +112,30 @@ class DeliveryController extends Controller
             ->with('status', 'Delivery draft created.');
     }
 
-    public function show(Delivery $delivery): View
+    public function show(Request $request, Delivery $delivery): View|RedirectResponse
     {
+        $actor = $request->user();
+
+        // Couriers may only view a delivery assigned to them (AR-41).
+        // Owner and staff see everything. Any other role should already
+        // have been blocked by middleware but we enforce it defensively.
+        if ($actor instanceof User && $actor->role === UserRole::Courier) {
+            $isAssigned = $delivery->courier_id !== null
+                && (int) $delivery->courier_id === (int) $actor->getKey();
+
+            if (! $isAssigned) {
+                return redirect()
+                    ->route('courier.dashboard')
+                    ->withErrors([
+                        'status' => 'You can only view deliveries assigned to you.',
+                    ]);
+            }
+        }
+
         $delivery->load([
             'kitchen',
             'customer',
+            'courier',
             'createdBy',
             'scheduledBy',
             'cancelledBy',
@@ -122,7 +156,26 @@ class DeliveryController extends Controller
             'delivery' => $delivery,
             'kitchens' => Kitchen::query()->active()->orderBy('name')->get(),
             'customers' => Customer::query()->active()->orderBy('name')->get(),
+            'couriers' => $this->activeCouriers(),
         ]);
+    }
+
+    /**
+     * Load the active couriers for the delivery form picker (AR-37).
+     *
+     * Returns only users whose role is Courier and whose is_active flag
+     * is true, ordered by name for a stable UI. This helper exists so
+     * both create() and edit() share the same query.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Models\User>
+     */
+    private function activeCouriers()
+    {
+        return User::query()
+            ->where('role', UserRole::Courier->value)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
     }
 
     public function update(UpdateDeliveryRequest $request, Delivery $delivery): RedirectResponse
@@ -148,6 +201,13 @@ class DeliveryController extends Controller
             return redirect()
                 ->route('deliveries.show', $delivery)
                 ->withErrors(['status' => $e->getMessage()]);
+        } catch (MissingCourierException
+                | CourierNotCourierRoleException
+                | InactiveCourierException
+                | CourierConcurrencyLimitReachedException $e) {
+            return redirect()
+                ->route('deliveries.show', $delivery)
+                ->withErrors(['status' => $e->getMessage()]);
         } catch (ConcurrencyLimitReachedException $e) {
             return redirect()
                 ->route('deliveries.show', $delivery)
@@ -167,7 +227,7 @@ class DeliveryController extends Controller
                 $request->user(),
                 (string) $request->validated('cancellation_reason'),
             );
-        } catch (NotCancellableStateException $e) {
+        } catch (NotCancellableStateException|NotAuthorizedToCancelException $e) {
             return redirect()
                 ->route('deliveries.show', $delivery)
                 ->withErrors(['status' => $e->getMessage()]);
@@ -176,5 +236,57 @@ class DeliveryController extends Controller
         return redirect()
             ->route('deliveries.show', $delivery)
             ->with('status', 'Delivery cancelled.');
+    }
+
+    /**
+     * POST /deliveries/{delivery}/dispatch — courier starts the delivery.
+     *
+     * Route middleware `role:courier` limits this to couriers; the
+     * dispatcher enforces state (`scheduled → in_transit`) and actor
+     * identity (must be the assigned courier). Any domain rejection is
+     * surfaced back to the show page as a flash error (AR-41).
+     */
+    public function dispatch(Request $request, Delivery $delivery): RedirectResponse
+    {
+        try {
+            $this->dispatcher->dispatch($delivery, $request->user());
+        } catch (NotDispatchableStateException
+                | NotAssignedCourierException
+                | MissingCourierException
+                | InactiveCourierException $e) {
+            return redirect()
+                ->route('deliveries.show', $delivery)
+                ->withErrors(['status' => $e->getMessage()]);
+        }
+
+        return redirect()
+            ->route('deliveries.show', $delivery)
+            ->with('status', 'Delivery dispatched.');
+    }
+
+    /**
+     * POST /deliveries/{delivery}/mark-delivered — courier taps the
+     * "Mark Delivered" button on their dashboard (AR-35).
+     *
+     * Route middleware `role:courier` limits this to couriers; the
+     * completer enforces state (`in_transit → delivered`) and actor
+     * identity. No auto-detection, no GPS proximity, no customer
+     * confirmation.
+     */
+    public function markDelivered(Request $request, Delivery $delivery): RedirectResponse
+    {
+        try {
+            $this->completer->complete($delivery, $request->user());
+        } catch (NotCompletableStateException
+                | NotAssignedCourierException
+                | InactiveCourierException $e) {
+            return redirect()
+                ->route('deliveries.show', $delivery)
+                ->withErrors(['status' => $e->getMessage()]);
+        }
+
+        return redirect()
+            ->route('deliveries.show', $delivery)
+            ->with('status', 'Delivery marked delivered.');
     }
 }

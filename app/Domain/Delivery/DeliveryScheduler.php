@@ -5,10 +5,15 @@ declare(strict_types=1);
 namespace App\Domain\Delivery;
 
 use App\Domain\Delivery\Exceptions\ConcurrencyLimitReachedException;
+use App\Domain\Delivery\Exceptions\CourierConcurrencyLimitReachedException;
+use App\Domain\Delivery\Exceptions\CourierNotCourierRoleException;
+use App\Domain\Delivery\Exceptions\InactiveCourierException;
 use App\Domain\Delivery\Exceptions\InactiveCustomerException;
 use App\Domain\Delivery\Exceptions\InactiveKitchenException;
+use App\Domain\Delivery\Exceptions\MissingCourierException;
 use App\Domain\Delivery\Exceptions\MissingSchedulingFieldsException;
 use App\Domain\Delivery\Exceptions\NotSchedulableStateException;
+use App\Domain\Identity\UserRole;
 use App\Models\Customer;
 use App\Models\Delivery;
 use App\Models\Kitchen;
@@ -42,6 +47,8 @@ class DeliveryScheduler
      *   - $delivery->kitchen_id references an active kitchen
      *   - $delivery->customer_id references an active customer
      *   - $delivery->scheduled_at is set and in the future
+     *   - $delivery->courier_id references an active user with role Courier
+     *     whose active-workload count is below the per-courier cap (AR-37)
      *   - Non-terminal delivery count is below the configured cap
      *
      * On success the delivery is refreshed in place with:
@@ -83,6 +90,9 @@ class DeliveryScheduler
             if (! $customer->is_active) {
                 throw InactiveCustomerException::forCustomerId((int) $customer->getKey());
             }
+
+            $courier = $this->assertCourier($fresh);
+            $this->assertCourierConcurrencyLimit((int) $courier->getKey(), $fresh->getKey());
 
             $this->assertConcurrencyLimit($fresh->getKey());
 
@@ -147,6 +157,73 @@ class DeliveryScheduler
 
         if (Carbon::instance($delivery->scheduled_at)->lessThanOrEqualTo(Carbon::now('UTC'))) {
             throw MissingSchedulingFieldsException::forField('scheduled_at');
+        }
+    }
+
+    /**
+     * Load and validate the courier assigned to the fresh delivery row.
+     *
+     * Preconditions checked here (AR-37):
+     *   - `courier_id` is set on the delivery row.
+     *   - The referenced user row exists.
+     *   - The user has role Courier.
+     *   - The user is active.
+     *
+     * The courier row is locked for update inside the transaction alongside
+     * the kitchen and customer rows so that a concurrent deactivation or
+     * role change cannot slip between validation and the scheduling write.
+     */
+    private function assertCourier(Delivery $delivery): User
+    {
+        if ($delivery->courier_id === null) {
+            throw MissingCourierException::missing();
+        }
+
+        $courier = User::query()->lockForUpdate()->find($delivery->courier_id);
+
+        if ($courier === null) {
+            throw MissingCourierException::forCourierId((int) $delivery->courier_id);
+        }
+
+        if ($courier->role !== UserRole::Courier) {
+            throw CourierNotCourierRoleException::forCourierId((int) $courier->getKey());
+        }
+
+        if (! $courier->is_active) {
+            throw InactiveCourierException::forCourierId((int) $courier->getKey());
+        }
+
+        return $courier;
+    }
+
+    /**
+     * Reject the scheduling attempt if the per-courier concurrency cap is
+     * already met (AR-34). Only `scheduled` and `in_transit` deliveries
+     * assigned to the same courier count; drafts are excluded because they
+     * have no committed courier assignment yet per AR-37.
+     *
+     * The current delivery is excluded from the count because it will
+     * occupy one of the courier's slots once the transition completes.
+     */
+    private function assertCourierConcurrencyLimit(int $courierId, int|string $currentDeliveryId): void
+    {
+        $limit = (int) config('delivery.max_concurrent_per_courier', 1);
+
+        if ($limit <= 0) {
+            throw CourierConcurrencyLimitReachedException::forLimit($limit);
+        }
+
+        $activeCount = Delivery::query()
+            ->where('courier_id', $courierId)
+            ->whereIn('status', [
+                DeliveryStatus::Scheduled->value,
+                DeliveryStatus::InTransit->value,
+            ])
+            ->whereKeyNot($currentDeliveryId)
+            ->count();
+
+        if ($activeCount >= $limit) {
+            throw CourierConcurrencyLimitReachedException::forLimit($limit);
         }
     }
 

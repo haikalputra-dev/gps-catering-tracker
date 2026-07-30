@@ -73,6 +73,38 @@
     </div>
 
     <div class="card">
+        <h2 style="margin:0 0 8px;font-size:1.1rem;">Courier</h2>
+        @if($delivery->courier)
+            <p style="margin:0;">
+                <strong>{{ $delivery->courier->name }}</strong>
+                <small style="color:#6b7280;">(#{{ $delivery->courier->id }})</small>
+            </p>
+        @else
+            <p style="margin:0;color:#6b7280;font-style:italic;">
+                No courier assigned yet.
+            </p>
+        @endif
+        <p style="margin:8px 0 0;">
+            <strong>Dispatched at:</strong>
+            @if($delivery->dispatched_at)
+                {{ $delivery->dispatched_at->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
+                <small style="color:#6b7280;">({{ $displayTz }})</small>
+            @else
+                <span class="placeholder">—</span>
+            @endif
+        </p>
+        <p style="margin:6px 0 0;">
+            <strong>Delivered at:</strong>
+            @if($delivery->delivered_at)
+                {{ $delivery->delivered_at->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
+                <small style="color:#6b7280;">({{ $displayTz }})</small>
+            @else
+                <span class="placeholder">—</span>
+            @endif
+        </p>
+    </div>
+
+    <div class="card">
         <h2 style="margin:0 0 8px;font-size:1.1rem;">Schedule</h2>
         <p style="margin:0;">
             <strong>Scheduled for:</strong>
@@ -91,29 +123,36 @@
         @endif
     </div>
 
-    <div class="card">
-        <h2 style="margin:0 0 8px;font-size:1.1rem;">Pricing</h2>
-        <p style="margin:0;">
-            <strong>Distance:</strong>
-            @if($delivery->distance_km !== null)
-                {{ number_format((float) $delivery->distance_km, 3, '.', '') }} km
-            @else
-                <span class="placeholder">—</span>
-            @endif
-        </p>
-        <p style="margin:6px 0 0;">
-            <strong>Fee:</strong>
-            @if($delivery->fee_rupiah !== null)
-                Rp {{ number_format((int) $delivery->fee_rupiah, 0, ',', '.') }}
-            @else
-                <span class="placeholder">—</span>
-            @endif
-        </p>
-        <p style="margin:8px 0 0;color:#6b7280;font-size:0.85rem;">
-            Fee is calculated once at scheduling using the straight-line distance
-            between the kitchen and the customer. It is not recalculated afterwards.
-        </p>
-    </div>
+    {{--
+        Pricing block is hidden from courier viewers (AR-40). Rendered as
+        DOM-absent (not CSS-hidden) so the fee never reaches the browser
+        for a courier session.
+    --}}
+    @if(!auth()->user()?->isCourier())
+        <div class="card">
+            <h2 style="margin:0 0 8px;font-size:1.1rem;">Pricing</h2>
+            <p style="margin:0;">
+                <strong>Distance:</strong>
+                @if($delivery->distance_km !== null)
+                    {{ number_format((float) $delivery->distance_km, 3, '.', '') }} km
+                @else
+                    <span class="placeholder">—</span>
+                @endif
+            </p>
+            <p style="margin:6px 0 0;">
+                <strong>Fee:</strong>
+                @if($delivery->fee_rupiah !== null)
+                    Rp {{ number_format((int) $delivery->fee_rupiah, 0, ',', '.') }}
+                @else
+                    <span class="placeholder">—</span>
+                @endif
+            </p>
+            <p style="margin:8px 0 0;color:#6b7280;font-size:0.85rem;">
+                Fee is calculated once at scheduling using the straight-line distance
+                between the kitchen and the customer. It is not recalculated afterwards.
+            </p>
+        </div>
+    @endif
 
     @include('deliveries._audit', ['delivery' => $delivery, 'displayTz' => $displayTz])
 

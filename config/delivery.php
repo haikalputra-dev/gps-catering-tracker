@@ -27,6 +27,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Maximum concurrent deliveries per courier (AR-34)
+    |--------------------------------------------------------------------------
+    |
+    | The number of simultaneously non-terminal deliveries permitted for a
+    | single courier. "Non-terminal for a courier" means any delivery whose
+    | status is `scheduled` or `in_transit` and whose `courier_id` matches
+    | the target courier. `draft` is not counted because a draft has no
+    | committed courier assignment yet (couriers are validated at
+    | scheduling per AR-37).
+    |
+    | This is a configurable domain rule, NOT a database constraint. The
+    | scheduler enforces it in the `draft → scheduled` transition alongside
+    | the system-wide limit above; the two limits are enforced independently
+    | and both must be satisfied.
+    |
+    | The MVP default of 1 matches the "one active delivery per courier"
+    | prototype expectation; production may raise it without migration.
+    |
+    | Values <= 0 are treated as "no courier may be scheduled" and will
+    | cause the scheduler to reject every `draft → scheduled` transition
+    | that references a courier.
+    |
+    */
+
+    'max_concurrent_per_courier' => (int) env('DELIVERY_MAX_CONCURRENT_PER_COURIER', 1),
+
+    /*
+    |--------------------------------------------------------------------------
     | Receipt number format (AR-24)
     |--------------------------------------------------------------------------
     |

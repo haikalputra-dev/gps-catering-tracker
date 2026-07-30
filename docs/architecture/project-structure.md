@@ -155,6 +155,37 @@ resources/views/deliveries/show.blade.php     Pricing card
 See `docs/deliveries/pricing-and-distance.md` and
 `docs/decisions/ADR-013-haversine-and-fee-formula.md`.
 
+## Delivery Courier Lifecycle (Packet 09)
+
+Packet 09 completes the delivery state machine. It binds a courier
+to each delivery at scheduling time, adds the `scheduled →
+in_transit → delivered` transitions as courier-initiated taps,
+extends cancellation to cover `in_transit`, and gives the courier
+role a functional dashboard. Fee remains hidden from courier-facing
+surfaces.
+
+```text
+app/Domain/Delivery/DeliveryDispatcher.php     scheduled -> in_transit
+app/Domain/Delivery/DeliveryCompleter.php      in_transit -> delivered
+app/Domain/Delivery/DeliveryScheduler.php      + courier assertions
+app/Domain/Delivery/DeliveryCanceller.php      + mid-route cancel matrix
+app/Domain/Delivery/Exceptions/                8 additional typed exceptions
+app/Http/Controllers/DeliveryController.php    + dispatch/markDelivered
+app/Http/Controllers/DashboardController.php   + courier() action
+routes/web.php                                 10 delivery routes total
+config/delivery.php                            + max_concurrent_per_courier
+database/migrations/2026_07_30_150000_add_courier_assignment_to_deliveries_table.php
+resources/views/dashboard/courier.blade.php    Courier home surface
+resources/views/deliveries/show.blade.php      Office-only Pricing card branch
+```
+
+See `docs/deliveries/courier-assignment.md`,
+`docs/deliveries/dispatch-and-completion.md`,
+`docs/deliveries/mid-route-cancellation.md`,
+`docs/deliveries/courier-visibility-and-fee-privacy.md`,
+`docs/decisions/ADR-014-courier-assignment-and-per-courier-limit.md`,
+and `docs/decisions/ADR-015-dispatch-and-completion-via-manual-taps.md`.
+
 ## Placeholder Notice
 
 The following directories still contain only a `.gitkeep` file:

@@ -185,13 +185,105 @@ does not reach `scheduled` leaves them `NULL`.
 - **DEL-AC-055:** The pricing calculator rejects negative distance and
   non-positive rounding step with `InvalidArgumentException`.
 
+## Courier lifecycle (Packet 09)
+
+### DEL-FR-037: Courier column
+
+Deliveries carry a `courier_id` foreign key to `users`. Nullable at
+`draft`, required at scheduling (AR-37). No reassignment after
+scheduling (AR-36).
+
+### DEL-FR-038: Assignment eligibility
+
+An assignable courier is a user with `role = 'courier'` and
+`is_active = true`. Violations raise
+`CourierNotCourierRoleException` or `InactiveCourierException`.
+
+### DEL-FR-039: Per-courier concurrency cap
+
+At scheduling time, the target courier's count of active deliveries
+(`draft`, `scheduled`, `in_transit`) must be strictly less than
+`config('delivery.max_per_courier_active')` (default `1`). Breach
+raises `CourierConcurrencyLimitReachedException` (AR-34).
+
+### DEL-FR-040: Dispatch endpoint
+
+`POST /deliveries/{delivery}/dispatch` (name
+`deliveries.dispatch`) is courier-only. It flips `scheduled →
+in_transit`, writes `dispatched_at = Carbon::now('UTC')`, and only
+the assigned, still-active courier may fire it. All other calls
+raise typed exceptions (AR-35).
+
+### DEL-FR-041: Completion endpoint
+
+`POST /deliveries/{delivery}/mark-delivered` (name
+`deliveries.mark-delivered`) is courier-only. It flips `in_transit
+→ delivered`, writes `delivered_at = Carbon::now('UTC')`, only the
+assigned, still-active courier may fire it, and `delivered_at >=
+dispatched_at` is guaranteed monotonic (AR-35).
+
+### DEL-FR-042: Mid-route cancellation
+
+`in_transit` is cancellable. Owner and staff may cancel any
+non-terminal state; a courier may cancel only their own
+`in_transit` delivery. Terminal states remain terminal. Blank
+reasons remain rejected (AR-38 revised).
+
+### DEL-FR-043: No `failed` state
+
+The state machine keeps its five states. There is no `failed`
+terminal state; failed deliveries are cancelled with a reason
+(AR-39).
+
+### DEL-FR-044: Fee privacy for couriers
+
+Neither `fee_rupiah` nor `distance_km` may appear on any
+courier-facing surface (show page for assigned courier, courier
+dashboard). Owner and staff continue to see both (AR-40).
+
+### DEL-FR-045: Route surface
+
+Exactly ten delivery routes exist:
+`index`, `create`, `store`, `edit`, `update`, `schedule`, `show`,
+`cancel`, `dispatch`, `mark-delivered`. No alternative dispatch or
+complete aliases are registered (AR-41).
+
+## Acceptance criteria (Packet 09)
+
+- **DEL-AC-056:** Scheduling refuses when `courier_id` is null.
+- **DEL-AC-057:** Scheduling refuses when the target user is not a
+  courier.
+- **DEL-AC-058:** Scheduling refuses when the target courier is
+  `is_active = false`.
+- **DEL-AC-059:** Scheduling refuses when the target courier is
+  already at the per-courier cap.
+- **DEL-AC-060:** Raising the cap via env lets a courier take on
+  more than one active delivery, without a code change.
+- **DEL-AC-061:** Dispatch stamps `dispatched_at` and rejects
+  non-scheduled sources.
+- **DEL-AC-062:** Completion stamps `delivered_at` and rejects
+  non-in_transit sources.
+- **DEL-AC-063:** Dispatch and completion never mutate the frozen
+  snapshot columns.
+- **DEL-AC-064:** Cancellation from `in_transit` succeeds for
+  owner, staff, and the assigned courier; is rejected for other
+  couriers.
+- **DEL-AC-065:** Courier show page never renders `fee_rupiah`,
+  `distance_km`, or the Pricing section.
+- **DEL-AC-066:** Courier dashboard is scoped to the acting
+  courier's own active deliveries only.
+- **DEL-AC-067:** `routes/web.php` registers exactly ten delivery
+  routes; `complete`, `deliver`, `finish`, `arrive`, `arrived` all
+  404.
+
 ## Out of scope
 
-- Courier assignment, dispatch, in-transit, delivered
-- Fee recalculation, discounts, taxes, surcharges
-- Routing distance (only geodesic Haversine)
-- SMS notifications, GPS telemetry, firmware integration
-- Receipt tracking page and authorization tokens
+- Reassignment after scheduling
+- `failed` terminal state
+- Customer-side confirmation, SMS, push, or email notifications
+- GPS proximity triggering, device provisioning, telemetry
+- Real-time map updates for customer or office
+- Fee recalculation on cancellation
 - API endpoints, mobile surfaces
 
 ## Traceability
@@ -206,3 +298,6 @@ does not reach `scheduled` leaves them `NULL`.
 | R-DEL-10       | AR-28        | Audit columns on `deliveries` table            |
 | DEL-FR-031..036| AR-29..AR-33 | `DistanceCalculator`, `PricingCalculator`,     |
 |                |              | `DeliveryScheduler` integration                |
+| DEL-FR-037..045| AR-34..AR-41 | `courier_id`, `dispatched_at`, `delivered_at`, |
+|                |              | `DeliveryDispatcher`, `DeliveryCompleter`,     |
+|                |              | courier dashboard, fee-privacy Blade branch    |

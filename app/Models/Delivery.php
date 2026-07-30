@@ -42,6 +42,9 @@ class Delivery extends Model
         'cancelled_by_user_id',
         'cancelled_at',
         'created_by_user_id',
+        'courier_id',
+        'dispatched_at',
+        'delivered_at',
     ];
 
     protected function casts(): array
@@ -51,6 +54,8 @@ class Delivery extends Model
             'scheduled_at' => 'datetime',
             'scheduled_at_recorded' => 'datetime',
             'cancelled_at' => 'datetime',
+            'dispatched_at' => 'datetime',
+            'delivered_at' => 'datetime',
             'kitchen_latitude' => 'decimal:7',
             'kitchen_longitude' => 'decimal:7',
             'customer_latitude' => 'decimal:7',
@@ -83,6 +88,11 @@ class Delivery extends Model
     public function cancelledBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cancelled_by_user_id');
+    }
+
+    public function courier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'courier_id');
     }
 
     /**
@@ -140,6 +150,33 @@ class Delivery extends Model
                 DeliveryStatus::activeCases(),
             ),
         );
+    }
+
+    /**
+     * Scope: deliveries assigned to a given courier (any status).
+     */
+    #[Scope]
+    protected function assignedToCourier(Builder $query, int $courierId): void
+    {
+        $query->where('courier_id', $courierId);
+    }
+
+    /**
+     * Scope: non-terminal deliveries assigned to a given courier.
+     *
+     * Only `scheduled` and `in_transit` count for a courier's "active"
+     * workload; drafts have no committed courier assignment yet per AR-37,
+     * so they are excluded even when `courier_id` is populated.
+     */
+    #[Scope]
+    protected function activeForCourier(Builder $query, int $courierId): void
+    {
+        $query
+            ->where('courier_id', $courierId)
+            ->whereIn('status', [
+                DeliveryStatus::Scheduled->value,
+                DeliveryStatus::InTransit->value,
+            ]);
     }
 
     /**

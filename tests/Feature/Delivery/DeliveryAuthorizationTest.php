@@ -66,13 +66,39 @@ class DeliveryAuthorizationTest extends TestCase
         $this->post('/deliveries', [])->assertForbidden();
     }
 
-    public function test_courier_receives_403_from_show(): void
+    public function test_unassigned_courier_is_redirected_from_show(): void
     {
+        // AR-41: couriers may only view deliveries assigned to them.
+        // Access is not a hard 403; the controller redirects to the
+        // courier dashboard with a status message so the courier gets
+        // a coherent UX rather than a raw error page.
         $owner = User::factory()->owner()->create();
         $delivery = $this->draft($owner);
 
         $this->actingAs(User::factory()->courier()->create());
-        $this->get("/deliveries/{$delivery->id}")->assertForbidden();
+        $this->get("/deliveries/{$delivery->id}")
+            ->assertRedirect(route('courier.dashboard'))
+            ->assertSessionHasErrors('status');
+    }
+
+    public function test_assigned_courier_can_view_show(): void
+    {
+        // AR-41: the courier assigned to a delivery is permitted to
+        // view its detail page. Fee-privacy handling (AR-40) is
+        // exercised in the pricing/UI test suites, not here.
+        $owner = User::factory()->owner()->create();
+        $courier = User::factory()->courier()->create();
+        $delivery = Delivery::factory()
+            ->for(Kitchen::factory(), 'kitchen')
+            ->for(Customer::factory(), 'customer')
+            ->scheduled()
+            ->create([
+                'created_by_user_id' => $owner->id,
+                'courier_id' => $courier->id,
+            ]);
+
+        $this->actingAs($courier);
+        $this->get("/deliveries/{$delivery->id}")->assertOk();
     }
 
     public function test_courier_receives_403_from_edit(): void
@@ -102,15 +128,83 @@ class DeliveryAuthorizationTest extends TestCase
         $this->post("/deliveries/{$delivery->id}/schedule")->assertForbidden();
     }
 
-    public function test_courier_receives_403_from_cancel(): void
+    public function test_courier_cannot_cancel_draft_delivery(): void
     {
+        // AR-38: couriers may only cancel deliveries currently in
+        // `in_transit` and assigned to them. A `draft` (or any state
+        // other than `in_transit`) is not cancellable by a courier,
+        // even if the courier is the assignee. The FormRequest gives
+        // the courier a UX-friendly redirect + status error rather
+        // than a raw 403, matching the pattern in show().
         $owner = User::factory()->owner()->create();
-        $delivery = $this->draft($owner);
+        $courier = User::factory()->courier()->create();
+        $delivery = Delivery::factory()
+            ->for(Kitchen::factory(), 'kitchen')
+            ->for(Customer::factory(), 'customer')
+            ->create([
+                'created_by_user_id' => $owner->id,
+                'courier_id' => $courier->id,
+            ]);
 
-        $this->actingAs(User::factory()->courier()->create());
+        $this->actingAs($courier);
         $this->post("/deliveries/{$delivery->id}/cancel", [
             'cancellation_reason' => 'blocked route',
-        ])->assertForbidden();
+        ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('status');
+
+        $this->assertSame('draft', $delivery->fresh()->status->value);
+    }
+
+    public function test_courier_cannot_cancel_someone_elses_in_transit(): void
+    {
+        // AR-38: a courier not assigned to the delivery is forbidden
+        // from cancelling, even mid-route. Cross-courier interference
+        // is explicitly out of scope (AR-41: no reassignment).
+        $owner = User::factory()->owner()->create();
+        $assignee = User::factory()->courier()->create();
+        $intruder = User::factory()->courier()->create();
+
+        $delivery = Delivery::factory()
+            ->for(Kitchen::factory(), 'kitchen')
+            ->for(Customer::factory(), 'customer')
+            ->inTransit()
+            ->create([
+                'created_by_user_id' => $owner->id,
+                'courier_id' => $assignee->id,
+            ]);
+
+        $this->actingAs($intruder);
+        $this->post("/deliveries/{$delivery->id}/cancel", [
+            'cancellation_reason' => 'not my job',
+        ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('status');
+
+        $this->assertSame('in_transit', $delivery->fresh()->status->value);
+    }
+
+    public function test_assigned_courier_can_cancel_own_in_transit(): void
+    {
+        // AR-38: mid-route cancellation is explicitly permitted for
+        // the assigned courier when the delivery is `in_transit`.
+        $owner = User::factory()->owner()->create();
+        $courier = User::factory()->courier()->create();
+        $delivery = Delivery::factory()
+            ->for(Kitchen::factory(), 'kitchen')
+            ->for(Customer::factory(), 'customer')
+            ->inTransit()
+            ->create([
+                'created_by_user_id' => $owner->id,
+                'courier_id' => $courier->id,
+            ]);
+
+        $this->actingAs($courier);
+        $this->post("/deliveries/{$delivery->id}/cancel", [
+            'cancellation_reason' => 'route blocked; customer notified',
+        ])->assertRedirect();
+
+        $this->assertSame('cancelled', $delivery->fresh()->status->value);
     }
 
     public function test_inactive_owner_session_is_rejected(): void

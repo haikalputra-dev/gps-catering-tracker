@@ -11,6 +11,7 @@ Kitchen management (owner/staff, map picker): Complete
 Customer management (owner/staff, map picker, active/inactive): Complete
 Delivery orders (draft, schedule, cancel; receipts, snapshots, cap): Complete
 Delivery distance and fee (Haversine + rupiah, frozen at scheduling): Complete
+Delivery courier assignment, dispatch, and completion (state machine complete): Complete
 Domain implementation: In progress
 Frontend implementation: Not started
 Firmware implementation: Not started

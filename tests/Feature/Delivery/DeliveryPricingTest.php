@@ -34,11 +34,16 @@ class DeliveryPricingTest extends TestCase
 
     private function draftAt(User $owner, Kitchen $kitchen, Customer $customer): Delivery
     {
+        // AR-37: scheduling requires an assigned active courier. These
+        // pricing tests focus on the distance/fee freeze at scheduling,
+        // so we seed a fresh courier on every draft to keep the courier
+        // precondition satisfied.
         return Delivery::factory()
             ->for($kitchen, 'kitchen')
             ->for($customer, 'customer')
             ->create([
                 'created_by_user_id' => $owner->id,
+                'courier_id' => User::factory()->courier()->create()->id,
                 'scheduled_at' => now()->addHours(2),
             ]);
     }

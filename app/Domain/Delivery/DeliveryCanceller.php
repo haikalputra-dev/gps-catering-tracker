@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\Delivery;
 
 use App\Domain\Delivery\Exceptions\CancellationReasonRequiredException;
+use App\Domain\Delivery\Exceptions\NotAuthorizedToCancelException;
 use App\Domain\Delivery\Exceptions\NotCancellableStateException;
+use App\Domain\Identity\UserRole;
 use App\Models\Delivery;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -58,6 +60,8 @@ class DeliveryCanceller
             throw NotCancellableStateException::forStatus($delivery->status->value);
         }
 
+        $this->assertActorMayCancel($delivery, $actor);
+
         return DB::transaction(function () use ($delivery, $actor, $trimmed): Delivery {
             $fresh = Delivery::query()
                 ->whereKey($delivery->getKey())
@@ -81,5 +85,40 @@ class DeliveryCanceller
 
             return $fresh->refresh();
         });
+    }
+
+    /**
+     * Enforce role-and-ownership authorization on cancellation (AR-38 revised).
+     *
+     * Owner and staff may cancel any non-terminal delivery. A courier may
+     * cancel only their own `in_transit` delivery; couriers cannot cancel
+     * drafts or scheduled deliveries even if they are the assigned courier
+     * (dispatching is required first). Any other role is rejected.
+     *
+     * The state-machine check above (`status->canTransitionTo(Cancelled)`)
+     * has already excluded terminal statuses; this method only distinguishes
+     * *who* may cancel from *what* status.
+     */
+    private function assertActorMayCancel(Delivery $delivery, User $actor): void
+    {
+        $role = $actor->role;
+
+        if ($role === UserRole::Owner || $role === UserRole::Staff) {
+            return;
+        }
+
+        if ($role === UserRole::Courier) {
+            $isAssigned = $delivery->courier_id !== null
+                && (int) $delivery->courier_id === (int) $actor->getKey();
+            $isInTransit = $delivery->status === DeliveryStatus::InTransit;
+
+            if ($isAssigned && $isInTransit) {
+                return;
+            }
+
+            throw NotAuthorizedToCancelException::forActor((int) $actor->getKey());
+        }
+
+        throw NotAuthorizedToCancelException::forActor((int) $actor->getKey());
     }
 }

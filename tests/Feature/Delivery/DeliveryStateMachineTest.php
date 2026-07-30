@@ -19,11 +19,16 @@ class DeliveryStateMachineTest extends TestCase
 
     private function draft(User $owner, ?Carbon $scheduledAt = null): Delivery
     {
+        // AR-37: scheduling requires an assigned active courier. These
+        // state-machine tests exercise transition guards, so we seed a
+        // fresh courier on every draft to isolate the transition under
+        // test from the courier precondition.
         return Delivery::factory()
             ->for(Kitchen::factory(), 'kitchen')
             ->for(Customer::factory(), 'customer')
             ->create([
                 'created_by_user_id' => $owner->id,
+                'courier_id' => User::factory()->courier()->create()->id,
                 'scheduled_at' => $scheduledAt ?? now()->addHours(2),
             ]);
     }

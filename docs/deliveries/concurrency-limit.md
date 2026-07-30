@@ -1,11 +1,13 @@
 # Concurrency Limit
 
 The catering operation is intentionally single-threaded by default: at
-most one delivery may be active at a time. This document explains the
-invariant, its configurability, and the enforcement path. See ADR-012
-for the design rationale.
+most one delivery may be active at a time. Packet 09 adds a second,
+per-courier cap on top of the global cap. This document explains both
+invariants, their configurability, and the enforcement path. See
+ADR-012 (global cap) and ADR-014 (per-courier cap) for the design
+rationale.
 
-## The invariant
+## The global invariant
 
 At any point in time, the count of deliveries in non-terminal statuses
 must not exceed `config('delivery.max_concurrent_active')`. The default
@@ -19,12 +21,34 @@ Non-terminal statuses are:
 
 Terminal statuses (`delivered`, `cancelled`) do not count.
 
+## The per-courier invariant
+
+For any single courier, the count of deliveries assigned to them in
+non-terminal statuses must not exceed
+`config('delivery.max_concurrent_per_courier')`. The default value is
+`1`.
+
+This is a distinct check from the global cap:
+
+- The global cap (`max_concurrent_active`) looks at ALL active
+  deliveries in the system.
+- The per-courier cap (`max_concurrent_per_courier`) looks only at
+  deliveries with a given `courier_id`.
+
+Both must be satisfied for scheduling to succeed. A single-courier
+operation running at defaults hits both caps at the same point (one
+active delivery in the system, assigned to the one courier). A
+future two-courier operation with global cap `2` and per-courier
+cap `1` prevents accidental double-booking of a single person.
+
 ## When it is checked
 
-The check runs inside `DeliveryScheduler::assertConcurrencyLimit()`,
-executed within the scheduling transaction. It uses the `active` scope
-on the `Delivery` model and excludes the current delivery from the
-count so the transition itself does not appear as a violation.
+The check runs inside `DeliveryScheduler::assertConcurrencyLimit()`
+(global) and `DeliveryScheduler::assertCourierCapacity()`
+(per-courier), both executed within the scheduling transaction. Both
+use the `active` scope on the `Delivery` model and exclude the
+current delivery from the count so the transition itself does not
+appear as a violation.
 
 The check does not run:
 
@@ -81,13 +105,19 @@ added if a real race is observed.
 
 ```
 DELIVERY_MAX_CONCURRENT_ACTIVE=1
+DELIVERY_MAX_CONCURRENT_PER_COURIER=1
 ```
 
 `config/delivery.php`:
 
 ```php
-'max_concurrent_active' => env('DELIVERY_MAX_CONCURRENT_ACTIVE', 1),
+'max_concurrent_active'      => env('DELIVERY_MAX_CONCURRENT_ACTIVE', 1),
+'max_concurrent_per_courier' => env('DELIVERY_MAX_CONCURRENT_PER_COURIER', 1),
 ```
+
+Zero-or-negative on either key blocks scheduling. Values are read
+from config on every scheduling attempt so no restart is needed to
+adjust capacity.
 
 ## Testing the invariant
 

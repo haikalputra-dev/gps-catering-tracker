@@ -24,8 +24,12 @@ class DeliveryRouteTest extends TestCase
             ->create(['created_by_user_id' => $owner->id]);
     }
 
-    public function test_only_eight_delivery_routes_are_registered(): void
+    public function test_only_ten_delivery_routes_are_registered(): void
     {
+        // Packet 09 added `dispatch` and `mark-delivered` to the delivery
+        // lifecycle. The set of route names is closed to prevent
+        // accidental drift (AR-41): no telemetry, no GPS, no customer
+        // surfaces, no real-time endpoints.
         $names = collect(Route::getRoutes()->getRoutes())
             ->map(fn ($r) => $r->getName())
             ->filter(fn ($n) => is_string($n) && str_starts_with($n, 'deliveries.'))
@@ -38,8 +42,10 @@ class DeliveryRouteTest extends TestCase
             [
                 'deliveries.cancel',
                 'deliveries.create',
+                'deliveries.dispatch',
                 'deliveries.edit',
                 'deliveries.index',
+                'deliveries.mark-delivered',
                 'deliveries.schedule',
                 'deliveries.show',
                 'deliveries.store',
@@ -58,15 +64,21 @@ class DeliveryRouteTest extends TestCase
         $this->get("/deliveries/{$delivery->id}/track")->assertNotFound();
     }
 
-    public function test_no_dispatch_or_complete_route_exists(): void
+    public function test_no_alternative_dispatch_or_complete_routes_exist(): void
     {
+        // Packet 09 canonicalises `dispatch` and `mark-delivered` as the
+        // only names for those transitions. Legacy or ad-hoc aliases
+        // (`complete`, `deliver`, `finish`, `arrive`, `arrived`) must
+        // 404 so route drift cannot bypass the state-machine guards.
         $owner = User::factory()->owner()->create();
         $delivery = $this->draft($owner);
 
         $this->actingAs($owner);
-        $this->post("/deliveries/{$delivery->id}/dispatch")->assertNotFound();
         $this->post("/deliveries/{$delivery->id}/complete")->assertNotFound();
         $this->post("/deliveries/{$delivery->id}/deliver")->assertNotFound();
+        $this->post("/deliveries/{$delivery->id}/finish")->assertNotFound();
+        $this->post("/deliveries/{$delivery->id}/arrive")->assertNotFound();
+        $this->post("/deliveries/{$delivery->id}/arrived")->assertNotFound();
     }
 
     public function test_no_api_route_exists(): void

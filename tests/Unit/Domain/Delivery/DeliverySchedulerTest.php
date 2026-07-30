@@ -35,14 +35,23 @@ class DeliverySchedulerTest extends TestCase
         );
     }
 
-    private function makeDraftFor(User $creator, ?Kitchen $kitchen = null, ?Customer $customer = null): Delivery
-    {
+    private function makeDraftFor(
+        User $creator,
+        ?Kitchen $kitchen = null,
+        ?Customer $customer = null,
+        ?User $courier = null,
+    ): Delivery {
         $kitchen ??= Kitchen::factory()->create();
         $customer ??= Customer::factory()->create();
+        // AR-37: a scheduled delivery must have an active courier assigned
+        // at draft time. Tests that don't care which courier just get a
+        // freshly-created active one.
+        $courier ??= User::factory()->courier()->create();
 
         return Delivery::factory()->create([
             'kitchen_id' => $kitchen->id,
             'customer_id' => $customer->id,
+            'courier_id' => $courier->id,
             'scheduled_at' => now()->addHours(3),
             'created_by_user_id' => $creator->id,
         ]);

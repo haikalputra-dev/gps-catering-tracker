@@ -19,11 +19,14 @@ use Illuminate\Support\Str;
  * @extends Factory<Delivery>
  *
  * Factories use Faker only; no real personal data is ever seeded.
- * States mirror the transitions exercised in Packet 07:
- *   - default          -> draft
- *   - scheduled        -> scheduled (with snapshots + receipt)
+ * States mirror the transitions exercised in Packets 07 and 09:
+ *   - default                 -> draft (no courier assignment)
+ *   - scheduled               -> scheduled (with snapshots + receipt + courier)
+ *   - inTransit               -> in_transit (scheduled + dispatched_at)
+ *   - delivered               -> delivered (in_transit + delivered_at)
  *   - cancelledFromDraft
  *   - cancelledFromScheduled
+ *   - cancelledFromInTransit  (AR-38 revised: mid-route cancellation)
  */
 class DeliveryFactory extends Factory
 {
@@ -38,6 +41,11 @@ class DeliveryFactory extends Factory
             'status' => DeliveryStatus::Draft->value,
             'kitchen_id' => Kitchen::factory(),
             'customer_id' => Customer::factory(),
+            // Draft deliveries do not commit a courier assignment (AR-37).
+            // States that need one override this attribute explicitly.
+            'courier_id' => null,
+            'dispatched_at' => null,
+            'delivered_at' => null,
             'scheduled_at' => null,
             'notes' => $this->faker->optional(0.3)->sentence(),
             'receipt_number' => null,
@@ -100,6 +108,9 @@ class DeliveryFactory extends Factory
                 'scheduled_at' => $scheduledAt,
                 'scheduled_at_recorded' => Carbon::now('UTC'),
                 'scheduled_by_user_id' => User::factory(),
+                // A scheduled delivery must have an active courier (AR-37).
+                // UserFactory's default is `is_active = true`.
+                'courier_id' => User::factory()->courier(),
                 'receipt_number' => sprintf('DEL-%s-%s', $datePart, $suffix),
                 'kitchen_code' => 'K-'.$this->faker->unique()->numerify('####'),
                 'kitchen_name' => $this->faker->company().' Kitchen',
@@ -115,6 +126,37 @@ class DeliveryFactory extends Factory
                 'fee_rupiah' => $feeRupiah,
             ];
         });
+    }
+
+    /**
+     * State: a delivery that has been dispatched by its courier and is
+     * currently in transit (AR-41). Extends `scheduled` so all snapshot,
+     * receipt, courier, distance, and fee fields are populated.
+     *
+     * `dispatched_at` is set to 1 minute after the scheduled_at recorded
+     * timestamp to guarantee a stable temporal ordering that tests can
+     * rely on without wall-clock races.
+     */
+    public function inTransit(): static
+    {
+        return $this->scheduled()->state(fn (array $attributes): array => [
+            'status' => DeliveryStatus::InTransit->value,
+            'dispatched_at' => Carbon::now('UTC'),
+        ]);
+    }
+
+    /**
+     * State: a delivery whose courier has tapped "Mark Delivered" (AR-35).
+     * Extends `inTransit` so `dispatched_at` is set, then sets
+     * `delivered_at` one minute later to satisfy the invariant
+     * `delivered_at >= dispatched_at`.
+     */
+    public function delivered(): static
+    {
+        return $this->inTransit()->state(fn (array $attributes): array => [
+            'status' => DeliveryStatus::Delivered->value,
+            'delivered_at' => Carbon::now('UTC')->addMinute(),
+        ]);
     }
 
     /**
@@ -140,6 +182,23 @@ class DeliveryFactory extends Factory
         return $this->scheduled()->state(fn (): array => [
             'status' => DeliveryStatus::Cancelled->value,
             'cancellation_reason' => 'Kitchen closed unexpectedly.',
+            'cancelled_at' => Carbon::now('UTC'),
+            'cancelled_by_user_id' => User::factory(),
+        ]);
+    }
+
+    /**
+     * State: a delivery cancelled mid-route from `in_transit` (AR-38
+     * revised). Receipt, snapshots, courier, and `dispatched_at` are
+     * preserved so the audit trail explains how far the delivery
+     * progressed before it was aborted. `delivered_at` remains null
+     * because the delivery never completed.
+     */
+    public function cancelledFromInTransit(): static
+    {
+        return $this->inTransit()->state(fn (): array => [
+            'status' => DeliveryStatus::Cancelled->value,
+            'cancellation_reason' => 'Customer no longer available at address.',
             'cancelled_at' => Carbon::now('UTC'),
             'cancelled_by_user_id' => User::factory(),
         ]);

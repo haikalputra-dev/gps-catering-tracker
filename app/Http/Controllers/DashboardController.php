@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domain\Identity\UserRole;
+use App\Models\Delivery;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -42,8 +44,29 @@ class DashboardController extends Controller
         return view('dashboard.staff');
     }
 
+    /**
+     * Render the courier dashboard.
+     *
+     * Loads the single active delivery assigned to the current courier
+     * (scheduled or in_transit) via the `activeForCourier` scope on the
+     * Delivery model. Under the AR-34 default cap of 1, a courier has
+     * at most one active delivery at any time; the scope orders by
+     * scheduled_at so the earliest is picked deterministically if the
+     * cap is ever raised.
+     */
     public function courier(): View
     {
-        return view('dashboard.courier');
+        /** @var User $user */
+        $user = Auth::guard('web')->user();
+
+        $activeDelivery = Delivery::query()
+            ->activeForCourier((int) $user->getKey())
+            ->with(['kitchen', 'customer'])
+            ->orderBy('scheduled_at')
+            ->first();
+
+        return view('dashboard.courier', [
+            'activeDelivery' => $activeDelivery,
+        ]);
     }
 }

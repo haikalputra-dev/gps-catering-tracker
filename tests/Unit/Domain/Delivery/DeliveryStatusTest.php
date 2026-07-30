@@ -64,9 +64,13 @@ class DeliveryStatusTest extends TestCase
 
     public function test_allowed_transitions_from_in_transit(): void
     {
+        // AR-38 revised: mid-route cancellation is permitted so a courier
+        // can abort a delivery that cannot be completed (customer no
+        // longer available, road blocked, kitchen recall, etc.).
         $this->assertTrue(DeliveryStatus::InTransit->canTransitionTo(DeliveryStatus::Delivered));
-        $this->assertFalse(DeliveryStatus::InTransit->canTransitionTo(DeliveryStatus::Cancelled));
+        $this->assertTrue(DeliveryStatus::InTransit->canTransitionTo(DeliveryStatus::Cancelled));
         $this->assertFalse(DeliveryStatus::InTransit->canTransitionTo(DeliveryStatus::Scheduled));
+        $this->assertFalse(DeliveryStatus::InTransit->canTransitionTo(DeliveryStatus::Draft));
     }
 
     public function test_terminal_states_cannot_transition_anywhere(): void

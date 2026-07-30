@@ -22,28 +22,33 @@ above are encoded in `isEditable()`, `isActiveForConcurrency()`, and
 ## Transitions allowed by the enum
 
 `DeliveryStatus::canTransitionTo()` declares which transitions are
-theoretically valid. Packet 07 implements only a subset of these; the
-remaining transitions are wired in later packets.
+valid. Packet 09 completes the machine — every transition below is
+now wired to a domain service and reachable through the HTTP layer.
 
-| From        | To          | Implemented in Packet 07 |
-| ----------- | ----------- | ------------------------ |
-| `draft`     | `scheduled` | Yes                      |
-| `draft`     | `cancelled` | Yes                      |
-| `scheduled` | `cancelled` | Yes                      |
-| `scheduled` | `in_transit`| No (declared only)       |
-| `in_transit`| `delivered` | No (declared only)       |
+| From         | To           | First implemented in |
+| ------------ | ------------ | -------------------- |
+| `draft`      | `scheduled`  | Packet 07            |
+| `draft`      | `cancelled`  | Packet 07            |
+| `scheduled`  | `cancelled`  | Packet 07            |
+| `scheduled`  | `in_transit` | Packet 09            |
+| `in_transit` | `delivered`  | Packet 09            |
+| `in_transit` | `cancelled`  | Packet 09 (AR-38 revised) |
 
 Terminal states have no outgoing transitions. Once a delivery is
 `delivered` or `cancelled` it stays there forever.
 
 ## Authoritative services
 
-Business logic never lives in the controller. Two domain services own
-the transitions:
+Business logic never lives in the controller. Four domain services
+own the transitions:
 
-- `App\Domain\Delivery\DeliveryScheduler` handles `draft to scheduled`.
-- `App\Domain\Delivery\DeliveryCanceller` handles the two cancellation
-  paths.
+- `App\Domain\Delivery\DeliveryScheduler` handles `draft → scheduled`.
+- `App\Domain\Delivery\DeliveryDispatcher` handles `scheduled →
+  in_transit`.
+- `App\Domain\Delivery\DeliveryCompleter` handles `in_transit →
+  delivered`.
+- `App\Domain\Delivery\DeliveryCanceller` handles the three
+  cancellation paths (from draft, scheduled, and in_transit).
 
 Each service:
 
@@ -68,15 +73,48 @@ The scheduler enforces (in order):
 On success it captures snapshots, generates a receipt, records the
 scheduler, and flips status atomically.
 
+## Preconditions for `scheduled → in_transit`
+
+`DeliveryDispatcher` enforces (in order):
+
+1. `status === scheduled`
+2. `courier_id` is non-null (should be, since the scheduler
+   required it, but re-verified defensively)
+3. Acting user's `id` equals `courier_id`
+4. Acting courier is `is_active = true`
+
+On success it writes `status = in_transit` and
+`dispatched_at = Carbon::now('UTC')`. Snapshot columns are
+untouched.
+
+## Preconditions for `in_transit → delivered`
+
+`DeliveryCompleter` enforces (in order):
+
+1. `status === in_transit`
+2. Acting user's `id` equals `courier_id`
+3. Acting courier is `is_active = true`
+
+On success it writes `status = delivered` and
+`delivered_at = Carbon::now('UTC')`. `dispatched_at` is preserved.
+
 ## Preconditions for cancellation
 
 The canceller enforces:
 
-1. `status in (draft, scheduled)`
-2. `cancellation_reason` trimmed length in `[3, 255]`
+1. `status in (draft, scheduled, in_transit)` — terminal states are
+   rejected with `NotCancellableStateException`
+2. Actor is authorised for this state (owner/staff any non-terminal;
+   assigned courier only their own `in_transit`; else
+   `NotAuthorizedToCancelException`)
+3. `cancellation_reason` non-empty after trimming
 
-Snapshots and receipt numbers already recorded are preserved. Drafts
-have no snapshot data to preserve.
+Snapshots, receipt numbers, `dispatched_at`, and `courier_id`
+already recorded are preserved. Drafts have no snapshot data to
+preserve.
+
+See `docs/deliveries/mid-route-cancellation.md` for the full
+cancellation matrix.
 
 ## Exception mapping
 
@@ -86,8 +124,16 @@ have no snapshot data to preserve.
 | `MissingSchedulingFieldsException`     | Required field missing or invalid    |
 | `InactiveKitchenException`             | Kitchen `is_active = false`          |
 | `InactiveCustomerException`            | Customer `is_active = false`         |
-| `ConcurrencyLimitReachedException`     | Cap already met                      |
-| `NotCancellableStateException`         | Already terminal or wrong status     |
+| `ConcurrencyLimitReachedException`     | Global cap already met               |
+| `MissingCourierException`              | `courier_id` null at scheduling      |
+| `CourierNotCourierRoleException`       | Assigned user is not a courier       |
+| `InactiveCourierException`             | Courier `is_active = false`          |
+| `CourierConcurrencyLimitReachedException` | Per-courier cap already met       |
+| `NotDispatchableStateException`        | Not in `scheduled` at dispatch time  |
+| `NotCompletableStateException`         | Not in `in_transit` at complete time |
+| `NotAssignedCourierException`          | Actor is not the assigned courier    |
+| `NotCancellableStateException`         | Already terminal                     |
+| `NotAuthorizedToCancelException`       | Actor not permitted for this state   |
 | `CancellationReasonRequiredException`  | Reason missing or wrong length       |
 
 All live under `App\Domain\Delivery\Exceptions`. The controller catches

@@ -11,10 +11,10 @@ namespace App\Domain\Delivery;
  * and `cancelled`. These strings are persisted in the `deliveries.status`
  * column and MUST NOT change (AR-23).
  *
- * Packet 07 exercises only the `draft -> scheduled`, `draft -> cancelled`
- * and `scheduled -> cancelled` transitions. `scheduled -> in_transit` and
- * `in_transit -> delivered` are declared in {@see canTransitionTo()} for
- * completeness but are not wired to any route in this packet.
+     * Packets 07 and 08 exercised only the `draft → scheduled`,
+ * `draft → cancelled`, and `scheduled → cancelled` transitions.
+ * Packet 09 activates `scheduled → in_transit`, `in_transit → delivered`,
+ * and `in_transit → cancelled` (AR-38 revised).
  */
 enum DeliveryStatus: string
 {
@@ -76,19 +76,25 @@ enum DeliveryStatus: string
     /**
      * Whether a transition from this status to $target is allowed.
      *
-     * Allowed transitions:
+     * Allowed transitions (final matrix per AR-23 as revised by AR-38):
      *   draft      -> scheduled | cancelled
      *   scheduled  -> in_transit | cancelled
-     *   in_transit -> delivered
+     *   in_transit -> delivered | cancelled
+     *   delivered  -> (none; terminal)
+     *   cancelled  -> (none; terminal)
      *
-     * Packet 07 routes only trigger the draft/scheduled outgoing edges.
+     * Packet 09 activates `in_transit → cancelled` for mid-route
+     * cancellation; the assigned courier (or owner/staff) may cancel a
+     * delivery that is already on the road. Preservation of frozen
+     * values on cancellation continues to be handled by
+     * `DeliveryCanceller`.
      */
     public function canTransitionTo(self $target): bool
     {
         return match ($this) {
             self::Draft => in_array($target, [self::Scheduled, self::Cancelled], true),
             self::Scheduled => in_array($target, [self::InTransit, self::Cancelled], true),
-            self::InTransit => $target === self::Delivered,
+            self::InTransit => in_array($target, [self::Delivered, self::Cancelled], true),
             self::Delivered, self::Cancelled => false,
         };
     }

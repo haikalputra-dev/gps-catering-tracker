@@ -4,6 +4,93 @@ Chronological, human-readable summary of application-visible changes.
 For code diffs see `git log`. For rationale see the decision log and
 the ADRs.
 
+## 2026-07-30 - Packet 09 - Courier assignment, dispatch, and completion
+
+### Added
+
+- Migration
+  `2026_07_30_XXXXXX_add_courier_and_lifecycle_timestamps_to_deliveries_table`
+  adding `courier_id bigint NULL` foreign key to `users` (index +
+  fk),`dispatched_at timestamp NULL`, and `delivered_at timestamp
+  NULL`.
+- `App\Domain\Delivery\DeliveryDispatcher` (state check, actor
+  identity, inactive-courier guard, atomic status + `dispatched_at`
+  write) and `App\Domain\Delivery\DeliveryCompleter` (state check,
+  actor identity, atomic status + `delivered_at` write, monotonic
+  ordering guarantee).
+- Extended `App\Domain\Delivery\DeliveryScheduler` with
+  `assertCourier()` and `assertCourierCapacity()` (per-courier cap
+  from `config('delivery.max_per_courier_active')`).
+- Extended `App\Domain\Delivery\DeliveryCanceller` to permit
+  cancellation from `in_transit` with per-actor authorization
+  (owner/staff any non-terminal; assigned courier own `in_transit`
+  only).
+- New typed exceptions under `App\Domain\Delivery\Exceptions`:
+  `MissingCourierException`, `CourierNotCourierRoleException`,
+  `InactiveCourierException`, `CourierConcurrencyLimitReachedException`,
+  `NotDispatchableStateException`, `NotCompletableStateException`,
+  `NotAssignedCourierException`, `NotAuthorizedToCancelException`.
+- Two new HTTP endpoints on the delivery resource:
+  `POST /deliveries/{delivery}/dispatch` (name
+  `deliveries.dispatch`, role `courier`) and
+  `POST /deliveries/{delivery}/mark-delivered` (name
+  `deliveries.mark-delivered`, role `courier`).
+- Courier dashboard at `GET /courier/dashboard` (role `courier`)
+  scoped to the acting courier's active deliveries only, with
+  state-appropriate action buttons (`Start Delivery` /
+  `Mark Delivered`) and an empty-state.
+- `role:` middleware extended to accept comma-separated role lists
+  (`role:owner,staff,courier`) for the shared show/cancel group.
+- `UserFactory` states `courier()` and `inactive()` and
+  `DeliveryFactory` states `inTransit()`, `delivered()`,
+  `cancelledFromInTransit()`.
+- `docs/deliveries/courier-assignment.md`,
+  `docs/deliveries/dispatch-and-completion.md`,
+  `docs/deliveries/mid-route-cancellation.md`,
+  `docs/deliveries/courier-visibility-and-fee-privacy.md`,
+  `docs/decisions/ADR-014-courier-assignment-and-per-courier-limit.md`,
+  `docs/decisions/ADR-015-dispatch-and-completion-via-manual-taps.md`.
+
+### Changed
+
+- `deliveries` show page: Pricing card, Distance readout, and
+  formatted fee wrapped in an office-only Blade branch. Assigned
+  couriers see the row without pricing.
+- `deliveries` cancel FormRequest: `authorize()` covers the AR-38
+  revised matrix (owner/staff any non-terminal; assigned courier own
+  `in_transit` only). `failedAuthorization()` throws
+  `HttpResponseException` with a redirect and session error under
+  `status`.
+- `deliveries` show controller: unassigned couriers hitting the show
+  URL are redirected to `courier.dashboard` with a session error
+  rather than 403 (avoids leaking existence of the delivery).
+- `.env.example` gained `DELIVERY_MAX_CONCURRENT_PER_COURIER=1`.
+- `config/delivery.php` gained `max_concurrent_per_courier` key.
+- `docs/deliveries/delivery-state-machine.md`,
+  `docs/deliveries/concurrency-limit.md`, and
+  `docs/requirements/delivery-requirements.md` updated for the new
+  transitions, per-courier cap, and Packet 09 requirements
+  (DEL-FR-037..045, DEL-AC-056..067).
+
+### Tests
+
+- New feature tests:
+  `DeliveryCourierAssignmentTest` (7),
+  `DeliveryFeePrivacyForCourierTest` (4),
+  `DeliveryCourierDashboardTest` (7),
+  `DeliveryRouteAccessMatrixTest` (10).
+- New unit tests:
+  `DeliveryDispatcherTest` (8),
+  `DeliveryCompleterTest` (8).
+- Updated: `DeliveryStatusTest` (in_transit→cancelled now valid),
+  `DeliveryRouteTest` (10-route baseline + alias 404s),
+  `DeliveryAuthorizationTest` (redirect semantics for unassigned
+  courier and cancel matrix), `DeliveryStateMachineTest`,
+  `DeliveryPricingTest`, `DeliveryConcurrencyLimitTest`
+  (`draft()`/`draftAt()` seed a courier), and
+  `DeliveryCancellerTest` (mid-route cancellation matrix).
+- Full suite: 323 tests, 877 assertions, all passing.
+
 ## 2026-07-30 - Packet 08 - Delivery distance and fee
 
 ### Added

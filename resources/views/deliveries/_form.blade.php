@@ -14,6 +14,7 @@
             ->format('Y-m-d\TH:i');
     }
     $currentNotes = old('notes', $delivery->notes);
+    $currentCourierId = old('courier_id', $delivery->courier_id);
 @endphp
 
 <label for="kitchen_id">Kitchen</label>
@@ -35,6 +36,17 @@
         </option>
     @endforeach
 </select>
+
+<label for="courier_id">Courier</label>
+<select id="courier_id" name="courier_id">
+    <option value="">-- No courier assigned yet --</option>
+    @foreach($couriers as $courier)
+        <option value="{{ $courier->id }}" @selected((int) $currentCourierId === (int) $courier->id)>
+            {{ $courier->name }}
+        </option>
+    @endforeach
+</select>
+<small style="color:#6b7280;">Optional on draft. Required when scheduling (AR-37).</small>
 
 <label for="scheduled_at">Scheduled at (Asia/Jakarta)</label>
 <input
