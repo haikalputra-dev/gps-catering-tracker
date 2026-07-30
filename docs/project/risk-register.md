@@ -31,6 +31,8 @@ progresses.
 | R-24 | Deliveries cannot be deleted through HTTP; cancelled and delivered rows accumulate. | Low | Deliberate design (ADR-010). Cancellation is the terminal disposal path. Retention policy is deferred to a later packet. |
 | R-25 | Snapshot columns duplicate kitchen and customer data at scheduling time; storage grows with delivery volume. | Low | Ten columns per delivery is manageable at expected volume. Alternative history-table designs were considered and rejected in ADR-011. |
 | R-26 | Application timezone is Asia/Jakarta while storage is UTC; validation rules like `after:now` compare in Jakarta, requiring test authors to construct future timestamps in the app timezone. | Low | Documented in `docs/deliveries/*` and task-packet-07-report.md; delivery tests use `now()` rather than `Carbon::now('UTC')` for future timestamps. |
+| R-27 | Geodesic Haversine distance underestimates real driving distance, especially in urban Jakarta where straight lines ignore rivers and one-way streets. | Medium | Accepted for prototype (ADR-013). Operators can raise `PRICING_RATE_PER_KM_RUPIAH` or `PRICING_MINIMUM_FEE_RUPIAH` without a code change. Routing-service integration is a future packet. |
+| R-28 | Delivery fee is frozen at scheduling; if the price sheet changes after a delivery is scheduled but before it is delivered, the receipted amount uses the old rate. | Low | Deliberate design (ADR-013, DEL-FR-034). Cancel and re-create is the recalculation path. |
 
 ## Notes
 

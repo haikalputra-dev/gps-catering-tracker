@@ -100,10 +100,96 @@ protected.
 No `DELETE` route is registered. Deliveries are never destroyed;
 cancellation is the terminal disposal path.
 
+## Distance and fee (Packet 08)
+
+### DEL-FR-031: Distance capture
+
+At `draft to scheduled`, the delivery captures a straight-line Haversine
+distance in kilometres between the snapshot kitchen coordinates and the
+snapshot customer coordinates. Stored in `distance_km` as
+`decimal(8, 3)`, rounded half-up to 3 decimal places.
+
+### DEL-FR-032: Fee capture
+
+At `draft to scheduled`, the delivery captures a rupiah fee in
+`fee_rupiah` (`unsigned int`). Formula:
+
+```
+raw       = distance_km * pricing.rate_per_km_rupiah
+rounded   = round(raw / pricing.fee_rounding_step_rupiah, 0, HALF_UP)
+            * pricing.fee_rounding_step_rupiah
+fee       = max(pricing.minimum_fee_rupiah, rounded)
+```
+
+### DEL-FR-033: Configuration
+
+The formula reads three keys from `config/pricing.php` on every call
+(`minimum_fee_rupiah`, `rate_per_km_rupiah`, `fee_rounding_step_rupiah`)
+which resolve to env variables `PRICING_MINIMUM_FEE_RUPIAH`,
+`PRICING_RATE_PER_KM_RUPIAH`, `PRICING_FEE_ROUNDING_STEP_RUPIAH`.
+Defaults are `5000`, `2000`, `100`. The Earth radius `6371.0088` km is
+a class constant, not configurable.
+
+### DEL-FR-034: Immutability
+
+Once populated, `distance_km` and `fee_rupiah` are never rewritten.
+Cancellation preserves both. No route or service recomputes them.
+
+### DEL-FR-035: Display
+
+Both values render only to authenticated owner and staff users on the
+delivery index (fee column) and delivery show page (pricing card).
+Rupiah format `Rp 12.345` (Indonesian dot-thousands). Draft rows show
+a placeholder dash.
+
+### DEL-FR-036: Draft nullability
+
+While `status = draft`, both columns are `NULL`. Any transition that
+does not reach `scheduled` leaves them `NULL`.
+
+## Acceptance criteria (Packet 08)
+
+- **DEL-AC-041:** `deliveries.distance_km` is `decimal(8, 3) NULL`
+  positioned after `customer_longitude`.
+- **DEL-AC-042:** `deliveries.fee_rupiah` is `unsigned int NULL`
+  positioned after `distance_km`.
+- **DEL-AC-043:** A newly created draft has `distance_km = NULL` and
+  `fee_rupiah = NULL`.
+- **DEL-AC-044:** Scheduling a draft populates both columns in the
+  same transaction that captures the address snapshot and generates
+  the receipt.
+- **DEL-AC-045:** `distance_km` equals the Haversine distance between
+  the snapshot coordinates rounded half-up to 3 decimals.
+- **DEL-AC-046:** `fee_rupiah` equals the formula in DEL-FR-032
+  applied to the stored `distance_km`.
+- **DEL-AC-047:** Overriding any of the three `pricing.*` config keys
+  changes the computed fee for the next scheduling only; existing
+  scheduled deliveries are unaffected.
+- **DEL-AC-048:** Cancelling a scheduled delivery preserves both
+  values byte-for-byte.
+- **DEL-AC-049:** Editing the source kitchen or customer coordinates
+  after scheduling does not change the stored `distance_km` or
+  `fee_rupiah`.
+- **DEL-AC-050:** The delivery show page renders a Pricing card with
+  distance, fee, and an explanatory note when either value is set.
+- **DEL-AC-051:** The delivery index adds a Fee column showing
+  `Rp <formatted>` for scheduled or cancelled-from-scheduled rows and
+  a placeholder for others.
+- **DEL-AC-052:** Guests, couriers, and inactive users cannot reach
+  the pricing surface (auth and role middleware are unchanged from
+  Packet 07 and cover the new column and card).
+- **DEL-AC-053:** No new route, controller action, or FormRequest is
+  introduced.
+- **DEL-AC-054:** The Haversine calculator rejects out-of-range
+  latitudes or longitudes with `InvalidArgumentException`.
+- **DEL-AC-055:** The pricing calculator rejects negative distance and
+  non-positive rounding step with `InvalidArgumentException`.
+
 ## Out of scope
 
 - Courier assignment, dispatch, in-transit, delivered
-- Distance, fees, Haversine math
+- Fee recalculation, discounts, taxes, surcharges
+- Routing distance (only geodesic Haversine)
 - SMS notifications, GPS telemetry, firmware integration
 - Receipt tracking page and authorization tokens
 - API endpoints, mobile surfaces
@@ -118,3 +204,5 @@ cancellation is the terminal disposal path.
 | R-DEL-08       | AR-26        | `DeliveryCanceller`, cancellation FormRequest  |
 | R-DEL-09       | AR-27        | `DeliveryScheduler::assertConcurrencyLimit()`  |
 | R-DEL-10       | AR-28        | Audit columns on `deliveries` table            |
+| DEL-FR-031..036| AR-29..AR-33 | `DistanceCalculator`, `PricingCalculator`,     |
+|                |              | `DeliveryScheduler` integration                |

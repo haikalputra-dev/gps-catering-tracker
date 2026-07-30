@@ -4,6 +4,70 @@ Chronological, human-readable summary of application-visible changes.
 For code diffs see `git log`. For rationale see the decision log and
 the ADRs.
 
+## 2026-07-30 - Packet 08 - Delivery distance and fee
+
+### Added
+
+- Migration
+  `2026_07_30_141932_add_distance_and_fee_to_deliveries_table` adding
+  `distance_km decimal(8,3) NULL` after `customer_longitude` and
+  `fee_rupiah unsigned int NULL` after `distance_km`.
+- `App\Domain\Delivery\DistanceCalculator` (Haversine, IUGG mean
+  radius `6371.0088` km on `EARTH_RADIUS_KM`, arg validation for
+  lat/lng, clamp for antipodal).
+- `App\Domain\Delivery\PricingCalculator` (config-driven, half-up
+  divide/multiply rounding, floor). Reads `config('pricing.*')` on
+  every call.
+- `config/pricing.php` with three keys (`minimum_fee_rupiah`,
+  `rate_per_km_rupiah`, `fee_rounding_step_rupiah`) and matching
+  `PRICING_*` entries in `.env.example`.
+- `docs/deliveries/pricing-and-distance.md` and
+  `docs/decisions/ADR-013-haversine-and-fee-formula.md`.
+- Unit tests
+  (`tests/Unit/Domain/Delivery/DistanceCalculatorTest.php`,
+  `PricingCalculatorTest.php`) and feature test
+  (`tests/Feature/Delivery/DeliveryPricingTest.php`) totalling 36
+  new tests, 67 new assertions.
+
+### Changed
+
+- `App\Models\Delivery`: `distance_km`, `fee_rupiah` added to
+  `$fillable`; casts `decimal:3` and `integer` added.
+- `App\Domain\Delivery\DeliveryScheduler`: constructor injects
+  `DistanceCalculator` and `PricingCalculator` alongside
+  `ReceiptNumberGenerator`. Distance and fee are computed after the
+  concurrency check and written in the same `forceFill` that
+  captures the snapshot and receipt.
+- `DeliveryFactory` `scheduled` state (inherited by
+  `cancelledFromScheduled`): populates `distance_km` and
+  `fee_rupiah` via container-resolved calculators.
+- `resources/views/deliveries/index.blade.php`: new Fee column.
+- `resources/views/deliveries/show.blade.php`: new Pricing card
+  (distance, fee, note that value is frozen at scheduling).
+- `docs/project/decision-log.md`: AR-29..AR-33 appended (AR-29
+  marked "Approved (revised)"); Packet 08 governance-audit note.
+- `docs/requirements/delivery-requirements.md`: DEL-FR-031..036 and
+  DEL-AC-041..055 sections plus traceability row.
+
+### Not changed
+
+- `.env` untouched.
+- `/home/ubuntu/GPS-server` untouched.
+- No new route, controller action, or FormRequest.
+- Delivery state machine and route list are unchanged from Packet 07.
+- No composer or npm package added or removed.
+- Leaflet 1.9.4 unchanged; not used by this packet.
+
+### Test result
+
+- `php artisan test`: 271 passed, 720 assertions.
+
+### Migration status
+
+- MySQL:
+  `2026_07_30_141932_add_distance_and_fee_to_deliveries_table`
+  applied 2026-07-30.
+
 ## 2026-07-30 - Packet 07 - Delivery orders
 
 ### Added

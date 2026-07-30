@@ -65,6 +65,10 @@ After scheduling:
 - The scheduler is never invoked twice on the same delivery.
 - The canceller never touches snapshot columns.
 - No admin path rewrites snapshots.
+- The frozen pricing values (`distance_km`, `fee_rupiah`) fall under
+  the same rule: they are set once in the scheduling transaction and
+  preserved on cancellation. See
+  [pricing-and-distance.md](pricing-and-distance.md).
 
 `tests/Unit/Domain/Delivery/DeliverySchedulerTest.php::test_snapshots_are_immutable_after_source_edits`
 exercises the guarantee by scheduling a delivery, renaming its source

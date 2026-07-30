@@ -60,6 +60,8 @@ class DeliveryCancellerTest extends TestCase
         $originalReceipt = $delivery->receipt_number;
         $originalKitchenCode = $delivery->kitchen_code;
         $originalCustomerName = $delivery->customer_name;
+        $originalDistance = $delivery->distance_km;
+        $originalFee = $delivery->fee_rupiah;
 
         $cancelled = (new DeliveryCanceller())->cancel($delivery, $actor, 'Kitchen closed');
 
@@ -67,6 +69,8 @@ class DeliveryCancellerTest extends TestCase
         $this->assertSame($originalReceipt, $cancelled->receipt_number);
         $this->assertSame($originalKitchenCode, $cancelled->kitchen_code);
         $this->assertSame($originalCustomerName, $cancelled->customer_name);
+        $this->assertSame($originalDistance, $cancelled->distance_km);
+        $this->assertSame($originalFee, $cancelled->fee_rupiah);
     }
 
     public function test_rejects_empty_reason(): void

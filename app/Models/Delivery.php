@@ -34,6 +34,8 @@ class Delivery extends Model
         'customer_address',
         'customer_latitude',
         'customer_longitude',
+        'distance_km',
+        'fee_rupiah',
         'scheduled_by_user_id',
         'scheduled_at_recorded',
         'cancellation_reason',
@@ -53,6 +55,8 @@ class Delivery extends Model
             'kitchen_longitude' => 'decimal:7',
             'customer_latitude' => 'decimal:7',
             'customer_longitude' => 'decimal:7',
+            'distance_km' => 'decimal:3',
+            'fee_rupiah' => 'integer',
         ];
     }
 

@@ -91,6 +91,30 @@
         @endif
     </div>
 
+    <div class="card">
+        <h2 style="margin:0 0 8px;font-size:1.1rem;">Pricing</h2>
+        <p style="margin:0;">
+            <strong>Distance:</strong>
+            @if($delivery->distance_km !== null)
+                {{ number_format((float) $delivery->distance_km, 3, '.', '') }} km
+            @else
+                <span class="placeholder">—</span>
+            @endif
+        </p>
+        <p style="margin:6px 0 0;">
+            <strong>Fee:</strong>
+            @if($delivery->fee_rupiah !== null)
+                Rp {{ number_format((int) $delivery->fee_rupiah, 0, ',', '.') }}
+            @else
+                <span class="placeholder">—</span>
+            @endif
+        </p>
+        <p style="margin:8px 0 0;color:#6b7280;font-size:0.85rem;">
+            Fee is calculated once at scheduling using the straight-line distance
+            between the kitchen and the customer. It is not recalculated afterwards.
+        </p>
+    </div>
+
     @include('deliveries._audit', ['delivery' => $delivery, 'displayTz' => $displayTz])
 
     <div class="card">

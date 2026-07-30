@@ -73,12 +73,20 @@ records remain complete. See
 [snapshots-and-history.md](snapshots-and-history.md) for the immutability
 guarantee.
 
-## Out of scope for Packet 07
+## Distance and fee (Packet 08)
+
+Scheduling now also freezes a straight-line Haversine `distance_km`
+and a rupiah `fee_rupiah` on the delivery row. Both use the snapshot
+coordinates captured at scheduling and are preserved on cancellation.
+See [pricing-and-distance.md](pricing-and-distance.md).
+
+## Out of scope
 
 - Courier assignment or `in_transit` / `delivered` transitions
-- Distance calculation, delivery fees, or Haversine math
+- Fee recalculation, discounts, taxes, surcharges
+- Routing distance (only geodesic Haversine)
 - Receipt-number public tracking page or authorization tokens
 - SMS notifications, GPS telemetry, firmware integration
 - API endpoints, mobile surfaces, WebSocket updates
 
-These arrive in Packets 08 and beyond.
+These arrive in later packets.

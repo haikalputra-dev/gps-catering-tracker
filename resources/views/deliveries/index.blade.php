@@ -43,6 +43,7 @@
                         <th>Kitchen</th>
                         <th>Customer</th>
                         <th>Scheduled ({{ $displayTz }})</th>
+                        <th>Fee</th>
                         <th>Created</th>
                         <th>Actions</th>
                     </tr>
@@ -76,6 +77,13 @@
                             <td>
                                 @if($delivery->scheduled_at)
                                     {{ $delivery->scheduled_at->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
+                                @else
+                                    <span class="placeholder">—</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($delivery->fee_rupiah !== null)
+                                    Rp {{ number_format((int) $delivery->fee_rupiah, 0, ',', '.') }}
                                 @else
                                     <span class="placeholder">—</span>
                                 @endif

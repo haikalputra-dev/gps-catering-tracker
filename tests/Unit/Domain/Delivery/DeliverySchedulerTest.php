@@ -6,11 +6,13 @@ namespace Tests\Unit\Domain\Delivery;
 
 use App\Domain\Delivery\DeliveryScheduler;
 use App\Domain\Delivery\DeliveryStatus;
+use App\Domain\Delivery\DistanceCalculator;
 use App\Domain\Delivery\Exceptions\ConcurrencyLimitReachedException;
 use App\Domain\Delivery\Exceptions\InactiveCustomerException;
 use App\Domain\Delivery\Exceptions\InactiveKitchenException;
 use App\Domain\Delivery\Exceptions\MissingSchedulingFieldsException;
 use App\Domain\Delivery\Exceptions\NotSchedulableStateException;
+use App\Domain\Delivery\PricingCalculator;
 use App\Domain\Delivery\ReceiptNumberGenerator;
 use App\Models\Customer;
 use App\Models\Delivery;
@@ -26,7 +28,11 @@ class DeliverySchedulerTest extends TestCase
 
     private function scheduler(): DeliveryScheduler
     {
-        return new DeliveryScheduler(new ReceiptNumberGenerator());
+        return new DeliveryScheduler(
+            new ReceiptNumberGenerator(),
+            new DistanceCalculator(),
+            new PricingCalculator(),
+        );
     }
 
     private function makeDraftFor(User $creator, ?Kitchen $kitchen = null, ?Customer $customer = null): Delivery
@@ -70,6 +76,15 @@ class DeliverySchedulerTest extends TestCase
         $this->assertSame($customer->name, $scheduled->customer_name);
         $this->assertSame($customer->phone, $scheduled->customer_phone);
         $this->assertSame($customer->address, $scheduled->customer_address);
+
+        // Distance and fee are frozen at scheduling.
+        $this->assertNotNull($scheduled->distance_km);
+        $this->assertNotNull($scheduled->fee_rupiah);
+        $this->assertIsInt($scheduled->fee_rupiah);
+        $this->assertGreaterThanOrEqual(
+            (int) config('pricing.minimum_fee_rupiah'),
+            $scheduled->fee_rupiah,
+        );
     }
 
     public function test_snapshots_are_immutable_after_source_edits(): void

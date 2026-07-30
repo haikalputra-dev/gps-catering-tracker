@@ -1,6 +1,6 @@
 # Project Decision Log
 
-This log records approved decisions (AR-01 through AR-15) in concise form. It
+This log records approved decisions (AR-01 through AR-33) in concise form. It
 complements the ADRs under `docs/decisions/`.
 
 | Ref   | Decision | Status |
@@ -33,12 +33,19 @@ complements the ADRs under `docs/decisions/`.
 | AR-26 | Delivery orders have no soft delete and no hard delete route; cancellation is the only terminal-non-completion outcome. Cancellation requires a 3..255 character reason and records the canceller and cancellation timestamp; scheduled cancellations preserve the receipt number and snapshots. | Approved |
 | AR-27 | `delivery.max_concurrent_active` is a configurable domain rule (not a schema constraint) that caps the number of simultaneously non-terminal (`draft`, `scheduled`, `in_transit`) deliveries. The default value is `1`, matching the AR-05 prototype limit; it is enforced by the scheduler at the `draft→scheduled` transition and rejected with a `ConcurrencyLimitReachedException`. | Approved (revised) |
 | AR-28 | `scheduled_at` is persisted in UTC; Asia/Jakarta (AR-13) is applied only at display and at receipt-date derivation. Delivery listing orders non-terminal deliveries first, then by `scheduled_at` ascending, then by `created_at` descending. | Approved |
+| AR-29 | Delivery fee is rounded to the nearest 100 rupiah using `PHP_ROUND_HALF_UP` before the minimum-fee floor is applied. The rounding step is configurable via `pricing.fee_rounding_step_rupiah` (default `100`). This supersedes any earlier reading of AR-04 that treated rounding as implicit. | Approved (revised) |
+| AR-30 | Distance and fee are preserved on cancellation, consistent with receipt-number and snapshot preservation from Packet 07. Cancellation MUST NOT null or modify `distance_km` or `fee_rupiah` on a scheduled delivery. | Approved |
+| AR-31 | `deliveries.distance_km` is `decimal(8, 3)` and `deliveries.fee_rupiah` is unsigned integer. Both are nullable while the delivery is `draft` and populated atomically during the `draft → scheduled` transition. | Approved |
+| AR-32 | Haversine geodesic distance is authoritative using mean Earth radius `6371.0088 km` (IUGG mean). Road-network routing (OSRM, GraphHopper, Google Directions) and detour multipliers are explicitly out of scope for this project. | Approved |
+| AR-33 | Packet 08 implements distance and fee calculation only. Courier assignment, `in_transit` transition, `delivered` transition, receipt-tracking authentication, telemetry, SMS, and firmware remain excluded. | Approved |
 
 > **Governance note (2026-07-30, Packet 05):** Entries AR-16 through AR-20 were introduced by Packet 04 without Project Manager approval. They are retained here for auditability but are voided and MUST NOT be used to justify implementation choices. Only decisions explicitly approved by the Project Manager may be recorded as approved Approval Requests. The Packet 04 implementation behaviour is documented in ADR-007 and its report; it stands as delivered code but not as an approved decision.
 
 > **Governance audit (2026-07-30, Packet 06):** No entries between AR-22 and AR-30 existed prior to this packet; there were no invalid unapproved decisions to void. AR-22 is recorded here as the sole newly approved decision for Packet 06.
 
 > **Governance audit (2026-07-30, Packet 07):** No entries between AR-23 and AR-40 existed prior to this packet; there were no invalid unapproved decisions to void. AR-23 through AR-28 are recorded here as the newly approved decisions for Packet 07. AR-27 supersedes the earlier draft wording that treated the concurrency limit as a database constraint; the Project Manager approved a configurable domain rule instead so future packets can lift the limit without a schema migration.
+
+> **Governance audit (2026-07-30, Packet 08):** The AR-29 through AR-40 range was inspected before implementation. No entries existed between AR-29 and AR-40 prior to this packet; there were no invalid unapproved decisions to void. AR-29 through AR-33 are recorded here as the newly approved decisions for Packet 08. AR-29 is marked "Approved (revised)" because it refines AR-04's implicit rounding into an explicit, configurable rule; the underlying fee semantics remain compatible with AR-04.
 
 ## Explicit Rejections and Constraints
 

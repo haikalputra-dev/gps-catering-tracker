@@ -134,6 +134,27 @@ See `docs/deliveries/delivery-management.md`,
 `docs/decisions/ADR-011-delivery-snapshots-and-receipt.md`, and
 `docs/decisions/ADR-012-delivery-concurrency-configurable.md`.
 
+## Delivery Pricing (Packet 08)
+
+Packet 08 extends the delivery slice with two frozen values on the
+scheduled delivery row: a straight-line Haversine `distance_km` and a
+rupiah `fee_rupiah`. Both are computed once at `draft -> scheduled`,
+preserved on cancellation, and never recomputed. Owner and staff only.
+No new route, controller action, or FormRequest.
+
+```text
+app/Domain/Delivery/DistanceCalculator.php     Haversine (R=6371.0088)
+app/Domain/Delivery/PricingCalculator.php      Config-driven rupiah fee
+app/Domain/Delivery/DeliveryScheduler.php      Integrates both calculators
+config/pricing.php                              Three-key pricing surface
+database/migrations/2026_07_30_141932_add_distance_and_fee_to_deliveries_table.php
+resources/views/deliveries/index.blade.php    Fee column
+resources/views/deliveries/show.blade.php     Pricing card
+```
+
+See `docs/deliveries/pricing-and-distance.md` and
+`docs/decisions/ADR-013-haversine-and-fee-formula.md`.
+
 ## Placeholder Notice
 
 The following directories still contain only a `.gitkeep` file:

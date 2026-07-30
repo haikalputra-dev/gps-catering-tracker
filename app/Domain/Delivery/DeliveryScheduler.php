@@ -27,8 +27,11 @@ use Illuminate\Support\Facades\DB;
  */
 class DeliveryScheduler
 {
-    public function __construct(private readonly ReceiptNumberGenerator $receipts)
-    {
+    public function __construct(
+        private readonly ReceiptNumberGenerator $receipts,
+        private readonly DistanceCalculator $distances,
+        private readonly PricingCalculator $pricing,
+    ) {
     }
 
     /**
@@ -83,6 +86,21 @@ class DeliveryScheduler
 
             $this->assertConcurrencyLimit($fresh->getKey());
 
+            // Compute Haversine distance from the snapshot coordinates
+            // (AR-25, AR-32). Reading directly from the locked kitchen
+            // and customer rows guarantees the priced values match the
+            // snapshot values byte-for-byte. Storage rounding to 3 dp
+            // aligns with the decimal(8, 3) column (AR-31).
+            $distanceKm = $this->distances->between(
+                (float) $kitchen->latitude,
+                (float) $kitchen->longitude,
+                (float) $customer->latitude,
+                (float) $customer->longitude,
+            );
+            $distanceKm = round($distanceKm, 3, PHP_ROUND_HALF_UP);
+
+            $feeRupiah = $this->pricing->feeForDistanceKm($distanceKm);
+
             $scheduledAt = $fresh->scheduled_at;
             $receipt = $this->receipts->generate($scheduledAt);
             $now = Carbon::now('UTC');
@@ -100,6 +118,8 @@ class DeliveryScheduler
                 'customer_address' => $customer->address,
                 'customer_latitude' => $customer->latitude,
                 'customer_longitude' => $customer->longitude,
+                'distance_km' => $distanceKm,
+                'fee_rupiah' => $feeRupiah,
                 'scheduled_by_user_id' => $actor->getKey(),
                 'scheduled_at_recorded' => $now,
             ])->save();

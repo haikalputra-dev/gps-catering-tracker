@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Domain\Delivery\DeliveryStatus;
+use App\Domain\Delivery\DistanceCalculator;
+use App\Domain\Delivery\PricingCalculator;
 use App\Models\Customer;
 use App\Models\Delivery;
 use App\Models\Kitchen;
@@ -76,6 +78,23 @@ class DeliveryFactory extends Factory
 
             $suffix = strtoupper(Str::random(4));
 
+            $kitchenLat = $this->faker->randomFloat(7, -7.5, -6.0);
+            $kitchenLng = $this->faker->randomFloat(7, 106.0, 107.5);
+            $customerLat = $this->faker->randomFloat(7, -7.5, -6.0);
+            $customerLng = $this->faker->randomFloat(7, 106.0, 107.5);
+
+            // Resolve calculators from the container so the fee formula
+            // lives in exactly one place (AR-01, AR-04, AR-29 revised).
+            $distances = app(DistanceCalculator::class);
+            $pricing = app(PricingCalculator::class);
+
+            $distanceKm = round(
+                $distances->between($kitchenLat, $kitchenLng, $customerLat, $customerLng),
+                3,
+                PHP_ROUND_HALF_UP,
+            );
+            $feeRupiah = $pricing->feeForDistanceKm($distanceKm);
+
             return [
                 'status' => DeliveryStatus::Scheduled->value,
                 'scheduled_at' => $scheduledAt,
@@ -85,13 +104,15 @@ class DeliveryFactory extends Factory
                 'kitchen_code' => 'K-'.$this->faker->unique()->numerify('####'),
                 'kitchen_name' => $this->faker->company().' Kitchen',
                 'kitchen_address' => $this->faker->streetAddress(),
-                'kitchen_latitude' => $this->faker->randomFloat(7, -7.5, -6.0),
-                'kitchen_longitude' => $this->faker->randomFloat(7, 106.0, 107.5),
+                'kitchen_latitude' => $kitchenLat,
+                'kitchen_longitude' => $kitchenLng,
                 'customer_name' => $this->faker->name(),
                 'customer_phone' => '+62'.$this->faker->numerify('##########'),
                 'customer_address' => $this->faker->streetAddress(),
-                'customer_latitude' => $this->faker->randomFloat(7, -7.5, -6.0),
-                'customer_longitude' => $this->faker->randomFloat(7, 106.0, 107.5),
+                'customer_latitude' => $customerLat,
+                'customer_longitude' => $customerLng,
+                'distance_km' => $distanceKm,
+                'fee_rupiah' => $feeRupiah,
             ];
         });
     }

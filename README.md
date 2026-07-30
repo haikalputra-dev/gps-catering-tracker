@@ -2,17 +2,18 @@
 
 ## Status
 
-**Delivery orders.** The repository ships a Laravel 13 baseline, a MySQL
+**Delivery pricing.** The repository ships a Laravel 13 baseline, a MySQL
 runtime, role-based session authentication (Packet 04), kitchen management
 with a Leaflet-based coordinate picker (Packet 05), customer management for
 owner and staff with the same map picker and an active/inactive lifecycle
-(Packet 06), and (as of Packet 07) delivery orders with a five-state
-lifecycle, `draft -> scheduled` and `draft/scheduled -> cancelled`
-transitions, receipt-number generation, kitchen and customer snapshots
-captured at scheduling, and a configurable concurrency cap (default 1).
-No tracking, device, pricing, or SMS feature is implemented yet. All
-remaining functional components are placeholders pending their specific
-approved task packets.
+(Packet 06), delivery orders with a five-state lifecycle, `draft ->
+scheduled` and `draft/scheduled -> cancelled` transitions, receipt-number
+generation, kitchen and customer snapshots captured at scheduling, and a
+configurable concurrency cap (default 1, Packet 07), and (as of Packet 08)
+a frozen straight-line Haversine `distance_km` and rupiah `fee_rupiah`
+captured at scheduling and preserved on cancellation. No tracking, device,
+courier, or SMS feature is implemented yet. All remaining functional
+components are placeholders pending their specific approved task packets.
 
 ## Objective
 
@@ -116,9 +117,22 @@ access the delivery surface yet. See `docs/deliveries/*` for the operator
 workflow, state machine, receipt format, snapshot rules, and concurrency
 policy.
 
+## Delivery Distance and Fee
+
+Scheduling now also freezes two values on the delivery row: a
+straight-line Haversine `distance_km` (in kilometres, 3 decimals) and a
+rupiah `fee_rupiah`. Both use the snapshot coordinates captured at
+scheduling, so they cannot drift when the source kitchen or customer is
+edited later. Cancellation preserves them. The fee formula is
+configurable via `PRICING_MINIMUM_FEE_RUPIAH`,
+`PRICING_RATE_PER_KM_RUPIAH`, and `PRICING_FEE_ROUNDING_STEP_RUPIAH`
+(defaults `5000`, `2000`, `100`). See
+`docs/deliveries/pricing-and-distance.md` and
+`docs/decisions/ADR-013-haversine-and-fee-formula.md`.
+
 Not yet implemented: courier assignment, `in_transit` and `delivered`
-transitions, tracking, Haversine, pricing, SMS, or IoT features. Do not
-treat these as complete.
+transitions, tracking, SMS, or IoT features. Do not treat these as
+complete.
 
 ## Separate Project Warning
 
