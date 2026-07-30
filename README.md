@@ -20,8 +20,8 @@ tracking. None of these features exist yet.
 - PHP 8.3.32
 - Composer 2.10.2
 - Node.js 20.20.2 / npm 10.8.2
-- SQLite for local development and automated tests
-- MySQL 8.0.46 for later deployment (configured in a later packet)
+- MySQL 8.0.46 for local runtime (database `gps_catering_tracker`)
+- SQLite `:memory:` for automated tests
 - Blade for the future frontend
 - Application timezone: Asia/Jakarta
 
@@ -32,20 +32,23 @@ See `docs/decisions/ADR-001-runtime-baseline.md` for details.
 ```bash
 cp .env.example .env
 php artisan key:generate
-touch database/database.sqlite
+# Configure MySQL DB_* variables in .env, then:
 php artisan migrate
 ```
 
-## SQLite Usage
+`.env.example` still advertises SQLite as the portable default so fresh clones
+boot without MySQL. On this VPS, `.env` is configured for MySQL per
+`docs/database/mysql-integration.md`.
 
-Local development and tests use SQLite. The database file lives at:
+## Database
 
-```text
-database/database.sqlite
-```
+- **Runtime:** MySQL 8.0 database `gps_catering_tracker`, accessed by
+  `gps_catering_app@localhost` with schema-scoped privileges. See
+  `docs/database/mysql-integration.md`.
+- **Tests:** SQLite `:memory:` via `phpunit.xml`. No MySQL required to run
+  the test suite.
 
-`DB_CONNECTION=sqlite` is set in `.env`. MySQL integration is deferred to a
-later packet.
+Rationale is captured in `docs/decisions/ADR-006-database-environment-strategy.md`.
 
 ## Test Commands
 

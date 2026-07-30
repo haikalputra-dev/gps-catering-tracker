@@ -16,7 +16,7 @@ complements the ADRs under `docs/decisions/`.
 | AR-09 | Scope change to the proposal's power design. | Rejected |
 | AR-10 | ESP32 + NEO-7M + SIM800L is the device stack (later packet). | Approved |
 | AR-11 | HTTP device communication is an accepted prototype limitation. | Approved |
-| AR-12 | Development and tests use SQLite; MySQL configured later. | Approved |
+| AR-12 | Runtime uses MySQL 8.0; tests use SQLite `:memory:` (see ADR-006). | Approved |
 | AR-13 | Application timezone is Asia/Jakarta. | Approved |
 | AR-14 | No production feature implemented before its specific task packet. | Approved |
 | AR-15 | Runtime baseline: Laravel 13, PHP 8.3.32, MySQL 8.0.46 (see ADR-001). | Approved |
