@@ -24,12 +24,14 @@ class DeliveryRouteTest extends TestCase
             ->create(['created_by_user_id' => $owner->id]);
     }
 
-    public function test_only_ten_delivery_routes_are_registered(): void
+    public function test_only_the_expected_delivery_routes_are_registered(): void
     {
-        // Packet 09 added `dispatch` and `mark-delivered` to the delivery
-        // lifecycle. The set of route names is closed to prevent
-        // accidental drift (AR-41): no telemetry, no GPS, no customer
-        // surfaces, no real-time endpoints.
+        // Packet 09 added `dispatch` and `mark-delivered`. Packet 12
+        // (AR-57) adds exactly one polling endpoint,
+        // `deliveries.telemetry.latest`, for the internal live-map. The
+        // set of route names is closed here to prevent accidental drift:
+        // no additional GPS or telemetry surfaces beyond the single
+        // named polling route are permitted on the internal namespace.
         $names = collect(Route::getRoutes()->getRoutes())
             ->map(fn ($r) => $r->getName())
             ->filter(fn ($n) => is_string($n) && str_starts_with($n, 'deliveries.'))
@@ -49,6 +51,7 @@ class DeliveryRouteTest extends TestCase
                 'deliveries.schedule',
                 'deliveries.show',
                 'deliveries.store',
+                'deliveries.telemetry.latest',
                 'deliveries.update',
             ],
             $names,

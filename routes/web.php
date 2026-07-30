@@ -4,11 +4,13 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryController;
+use App\Http\Controllers\DeliveryTelemetryController;
 use App\Http\Controllers\Device\DeviceController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\Owner\UserController as OwnerUserController;
 use App\Http\Controllers\Telemetry\TelemetryController;
 use App\Http\Controllers\TrackingController;
+use App\Http\Controllers\TrackingTelemetryController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +40,14 @@ Route::post('/track', [TrackingController::class, 'authenticate'])
     ->name('tracking.authenticate');
 Route::get('/track/status', [TrackingController::class, 'status'])->name('tracking.status');
 Route::post('/track/sign-out', [TrackingController::class, 'signOut'])->name('tracking.signOut');
+
+// Customer live-map polling endpoint (Packet 12, AR-57). Session-scoped
+// authentication is handled inside the controller so an expired tab
+// gets a JSON 401 rather than an HTML redirect. The `throttle:60,1`
+// middleware caps a single client at one poll per second on average.
+Route::get('/track/telemetry/latest', [TrackingTelemetryController::class, 'latest'])
+    ->middleware('throttle:60,1')
+    ->name('tracking.telemetry.latest');
 
 Route::middleware(['auth', 'active'])->group(function (): void {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -123,6 +133,18 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::post('/{delivery}/dispatch', [DeliveryController::class, 'dispatch'])->name('dispatch');
             Route::post('/{delivery}/mark-delivered', [DeliveryController::class, 'markDelivered'])->name('mark-delivered');
         });
+
+        // Live-map polling endpoint for the internal surface (Packet 12,
+        // AR-57). Shares the same role trio as `show`; couriers are
+        // additionally restricted to their own delivery inside the
+        // controller. Throttle caps polling at 60 req/min per session
+        // to leave headroom above the 3s default cadence.
+        Route::middleware('role:owner,staff,courier')
+            ->group(function (): void {
+                Route::get('/{delivery}/telemetry/latest', [DeliveryTelemetryController::class, 'latest'])
+                    ->middleware('throttle:60,1')
+                    ->name('telemetry.latest');
+            });
     });
 });
 

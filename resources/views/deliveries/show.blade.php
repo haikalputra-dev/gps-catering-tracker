@@ -154,6 +154,56 @@
         </div>
     @endif
 
+    {{--
+        Live-map block (Packet 12, AR-55 / AR-56 / AR-57). Rendered
+        for `scheduled` and `in_transit` deliveries; before scheduling
+        no snapshot coordinates exist, and after delivery/cancellation
+        there is no live position to show. The map polls
+        `deliveries.telemetry.latest` at the interval declared by
+        `config('telemetry.polling_interval_ms')`.
+    --}}
+    @php
+        $liveStatuses = [DeliveryStatus::Scheduled, DeliveryStatus::InTransit];
+    @endphp
+    @if(in_array($delivery->status, $liveStatuses, true))
+        <div class="card">
+            <h2 style="margin:0 0 8px;font-size:1.1rem;">Live position</h2>
+            <p style="margin:0 0 8px;color:#6b7280;font-size:0.9rem;">
+                @if($delivery->status === DeliveryStatus::Scheduled)
+                    Awaiting dispatch — the courier marker appears once the delivery starts.
+                @else
+                    Auto-refreshing every {{ (int) (config('telemetry.polling_interval_ms', 3000) / 1000) }}s.
+                @endif
+            </p>
+            <div
+                id="delivery-live-map"
+                class="live-map-container"
+                data-live-map
+                data-endpoint="{{ route('deliveries.telemetry.latest', $delivery) }}"
+                data-interval="{{ (int) config('telemetry.polling_interval_ms', 3000) }}"
+                data-kitchen-latitude="{{ $delivery->kitchen_latitude }}"
+                data-kitchen-longitude="{{ $delivery->kitchen_longitude }}"
+                data-customer-latitude="{{ $delivery->customer_latitude }}"
+                data-customer-longitude="{{ $delivery->customer_longitude }}"
+                data-tile-url="{{ config('map.tile_url') }}"
+                data-tile-attribution="{{ config('map.tile_attribution') }}"
+                data-tile-max-zoom="{{ (int) config('map.tile_max_zoom', 19) }}"
+                data-status-target="delivery-live-map-status"
+            ></div>
+            <p
+                id="delivery-live-map-status"
+                class="live-map-status"
+                style="margin:8px 0 0;color:#4b5563;font-size:0.85rem;"
+            >
+                @if($delivery->status === DeliveryStatus::Scheduled)
+                    Awaiting first live position.
+                @else
+                    Waiting for the first live position.
+                @endif
+            </p>
+        </div>
+    @endif
+
     @include('deliveries._audit', ['delivery' => $delivery, 'displayTz' => $displayTz])
 
     <div class="card">

@@ -288,3 +288,281 @@ ADR-015. Attribution reads delivery status but never writes it.
 - Push channel (WebSocket, SSE, Pusher) for telemetry.
 - Any change to the delivery state machine, columns, or existing
   admin surfaces.
+
+---
+
+# Live Map (Packet 12)
+
+Packet 12 adds the visible half of GPS: a live map on the internal
+delivery-show page and the customer tracking-status page, backed by
+two JSON polling endpoints. Nothing in this section changes the
+schema, the ingest path, or any Packet 11 behaviour; the requirements
+below are additive.
+
+## LIVE-FR-01: Two polling endpoints exist and only these two
+
+The application exposes exactly two live-position read surfaces:
+
+- `GET /deliveries/{delivery}/telemetry/latest` — internal, name
+  `deliveries.telemetry.latest`.
+- `GET /track/telemetry/latest` — customer-facing, name
+  `tracking.telemetry.latest`.
+
+No other route serves telemetry rows to a browser, and no route serves
+a *list* of telemetry rows. Any future export or history surface
+requires its own requirement row here.
+
+## LIVE-FR-02: Response envelope
+
+Both endpoints return the same top-level envelope:
+
+```
+{"delivery_id": <int>, "status": "<delivery status>", "latest": <object|null>}
+```
+
+`status` is the plain-string form of the delivery's current status
+(`scheduled`, `in_transit`, `delivered`, `cancelled`, or `draft`).
+`latest` is either an object as defined in LIVE-FR-03 / LIVE-FR-04, or
+`null`.
+
+## LIVE-FR-03: Staff surface fields
+
+The internal endpoint's `latest` object contains:
+
+- `latitude` (float, WGS84)
+- `longitude` (float, WGS84)
+- `speed_kmh` (float or null)
+- `heading_degrees` (float or null)
+- `gps_timestamp` (UTC ISO8601 with `Z` suffix)
+- `received_at` (UTC ISO8601 with `Z` suffix)
+
+`latest` is `null` when no telemetry rows exist for the delivery.
+There is no `in_transit` gate on the staff endpoint: rows persist and
+remain visible for retrospective review after delivery closes.
+
+## LIVE-FR-04: Customer surface fields
+
+The customer endpoint's `latest` object contains only:
+
+- `latitude` (float, WGS84)
+- `longitude` (float, WGS84)
+- `received_at` (UTC ISO8601 with `Z` suffix)
+
+`speed_kmh`, `heading_degrees`, and `gps_timestamp` are never present.
+`latest` is `null` for any delivery status other than `in_transit`,
+regardless of whether telemetry rows exist. This is enforced in the
+provider, not in the client.
+
+## LIVE-FR-05: Authorization
+
+- The staff endpoint requires `auth`, `active`, and the role trio
+  `owner,staff,courier`. Couriers are additionally restricted to their
+  own delivery (`403` when the delivery's `courier_id` does not match
+  the authenticated user).
+- The customer endpoint requires no Laravel user. It reads
+  `session(TrackingController::SESSION_KEY)` and returns JSON `401`
+  when the key is missing or points to a delivery that no longer
+  exists.
+
+## LIVE-FR-06: Throttle
+
+Both endpoints share the `throttle:60,1` bucket signature (60 requests
+per minute per session / per user). Exceeding the bucket returns
+`429`.
+
+## LIVE-FR-07: Polling model
+
+The browser polls each endpoint on a fixed `setInterval`, default
+`config('telemetry.polling_interval_ms')` = 3000 ms, overridable
+per-page via a `data-interval` attribute on the map container. There
+is no WebSocket, SSE, long-polling, or push channel. The client stops
+the interval when the tab is hidden and resumes it on
+`visibilitychange`.
+
+## LIVE-FR-08: Rendered markers
+
+The live map renders three markers: a fixed kitchen marker, a fixed
+customer marker, and a single moving courier marker. There is no
+breadcrumb trail of recent positions, no line between the kitchen and
+the customer, and no historical playback control.
+
+## LIVE-FR-09: Blade status gates
+
+- `deliveries/show.blade.php` renders the live-map card only when the
+  delivery status is `scheduled` or `in_transit`.
+- `tracking/status.blade.php` renders the live-map card only when the
+  delivery status is `in_transit`.
+
+Both cards are additive; no existing markup is removed or restructured.
+
+## LIVE-AC-01: Envelope shape (both endpoints)
+
+A `GET` to either polling endpoint against a delivery with at least
+one telemetry row returns HTTP `200` and a body matching LIVE-FR-02
+exactly. The `delivery_id` matches the URL's delivery.
+
+## LIVE-AC-02: Staff full row
+
+A staff or owner `GET` to the internal endpoint against an in-transit
+delivery with a recent row returns `latest` containing all six fields
+of LIVE-FR-03, with UTC-Z timestamps.
+
+## LIVE-AC-03: Customer projection
+
+A `GET` to the customer endpoint from a valid tracking session against
+an in-transit delivery returns `latest` with exactly `latitude`,
+`longitude`, `received_at` — no `speed_kmh`, no `heading_degrees`, no
+`gps_timestamp`.
+
+## LIVE-AC-04: Customer null before dispatch and after close
+
+The customer endpoint returns `latest: null` when the delivery is
+`scheduled`, `delivered`, `cancelled`, or `draft`, even if rows exist
+in `telemetry_records`.
+
+## LIVE-AC-05: Courier ownership guard
+
+A courier `GET` to the internal endpoint against a delivery whose
+`courier_id` does not match the caller returns `403` with a JSON
+`message`.
+
+## LIVE-AC-06: Session guard
+
+A `GET` to the customer endpoint without a tracking session, or with a
+session key pointing to a missing delivery, returns JSON `401`.
+
+## LIVE-AC-07: Latest picks most-recent by `received_at`
+
+Given two rows with different `received_at` values, both endpoints
+return the one with the later `received_at`.
+
+## LIVE-AC-08: Throttle returns 429 after 60 requests per minute
+
+The 61st `GET` to either endpoint within one minute returns `429`.
+
+## LIVE-AC-09: Map cards render per status gate
+
+- Internal delivery-show renders `#delivery-live-map` for `scheduled`
+  and `in_transit`, and does not render it for `delivered`,
+  `cancelled`, or `draft`.
+- Tracking-status renders `#tracking-live-map` for `in_transit` only.
+
+# Simulator (Packet 12)
+
+## SIM-FR-01: Command signature
+
+`php artisan telemetry:simulate` accepts:
+
+- `--device=IDENT` (required; matches `devices.identifier`)
+- `--interval=N` (seconds between pings; default from
+  `config('telemetry.simulator_default_interval_seconds')`; must be
+  `>= 1`)
+- `--duration=N` (total run duration in seconds; default from
+  `config('telemetry.simulator_default_duration_seconds')`; must be
+  `>= --interval`)
+- `--jitter=M` (metres of positional jitter added per ping; default
+  from `config('telemetry.simulator_default_jitter_meters')`; must be
+  `>= 0`)
+- `--dry-run` (flag; issue no HTTP calls and print the plan only)
+
+## SIM-FR-02: Uses the real ingest path
+
+Each ping is a `POST` to
+`config('telemetry.simulator_base_url') . '/api/telemetry'` with
+`Bearer <device.api_token>`. The command never writes to
+`telemetry_records` directly.
+
+## SIM-FR-03: Resolution rules
+
+The command resolves its target the same way the ingester does:
+device by `identifier` (must be active), assignment by open row on
+`device_assignments`, delivery by the bound courier's most recent
+`scheduled` or `in_transit` row. Any absence exits with a non-zero
+status and an error message.
+
+## SIM-FR-04: Path
+
+Each tick is a linear interpolation between the delivery's
+`kitchen_latitude`/`kitchen_longitude` and
+`customer_latitude`/`customer_longitude` snapshot columns, from the
+kitchen at tick 0 to the customer at tick N-1. `--jitter` adds a
+uniform +/-M metre offset. `speed_kmh` is a constant run-average;
+`heading_degrees` is the forward azimuth from start to end;
+`gps_timestamp` is the server clock at tick time in UTC.
+
+## SIM-FR-05: Signal handling
+
+On platforms with `pcntl`, the command installs SIGINT and SIGTERM
+handlers so the loop exits cleanly after the current tick. Absence of
+`pcntl` is not an error; the command still runs but respects only
+`--duration`.
+
+## SIM-AC-01: Missing device option
+
+`php artisan telemetry:simulate` (no `--device`) exits with a non-zero
+status and a message containing `--device option is required`.
+
+## SIM-AC-02: Unknown or inactive device
+
+`--device=DOES-NOT-EXIST` exits with a non-zero status. An inactive
+device exits with a message containing "is inactive".
+
+## SIM-AC-03: No open assignment
+
+A device with no open `device_assignments` row exits with a message
+containing "no open courier assignment".
+
+## SIM-AC-04: No active delivery
+
+A device whose bound courier has no `scheduled` or `in_transit`
+delivery exits with a message containing "no scheduled or in_transit
+delivery".
+
+## SIM-AC-05: Dry run issues no HTTP calls
+
+`--dry-run` with an otherwise valid target prints the plan and each
+tick line, and issues zero HTTP requests.
+
+## SIM-AC-06: Real run posts one request per tick with Bearer token
+
+A non-dry-run against `--interval=1 --duration=N` issues exactly `N`
+POST requests to `/api/telemetry` with the device's real Bearer
+token.
+
+## SIM-AC-07: Endpoints of the walk
+
+With `--jitter=0`, the first tick's payload latitude/longitude equal
+the delivery's kitchen snapshot; the last tick's payload equals the
+customer snapshot.
+
+## SIM-AC-08: 429 is treated as throttled
+
+An ingest response of `429` is logged as throttled and does not
+terminate the run; the loop continues to the next tick.
+
+## Traceability (Packet 12)
+
+| Requirement | Approved row | Implementing artifact |
+| --- | --- | --- |
+| LIVE-FR-01 | AR-57, AR-58 | `routes/web.php`, `DeliveryTelemetryController`, `TrackingTelemetryController` |
+| LIVE-FR-02 | AR-57 | `LatestTelemetryProvider::forStaff/forCustomer` |
+| LIVE-FR-03 | AR-57 | `LatestTelemetryProvider::forStaff` |
+| LIVE-FR-04 | AR-57 | `LatestTelemetryProvider::forCustomer` |
+| LIVE-FR-05 | AR-57 | `DeliveryTelemetryController::latest`, `TrackingTelemetryController::latest` |
+| LIVE-FR-06 | AR-57 | `routes/web.php` `throttle:60,1` middleware |
+| LIVE-FR-07 | AR-55 | `resources/js/live-map.js`, `config/telemetry.php` `polling_interval_ms` |
+| LIVE-FR-08 | AR-56 | `resources/js/live-map.js` (markers only) |
+| LIVE-FR-09 | AR-58 | `resources/views/deliveries/show.blade.php`, `resources/views/tracking/status.blade.php` |
+| SIM-FR-01..05 | AR-54 | `App\Console\Commands\SimulateTelemetryCommand` |
+
+## Out of scope (Packet 12)
+
+- Firmware code (ESP32, GPS module wiring).
+- Retention purge worker (still deferred).
+- Breadcrumb trail or route line on the map.
+- Historical playback UI.
+- WebSocket, SSE, or push channels.
+- Geofencing, deviation alerts, or arrival predictions.
+- Multi-delivery map view (fleet map).
+- Real-time customer notifications outside the poll response.
+- Any new npm dependency; any schema change.

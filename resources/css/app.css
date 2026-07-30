@@ -76,3 +76,32 @@ textarea#customer-address {
     font-family: inherit;
     font-size: 0.95rem;
 }
+
+/* Live-map container (Packet 12). Shared by the staff surface
+   (#delivery-live-map) and the customer surface (#tracking-live-map). */
+.live-map-container {
+    height: 360px;
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    background: #e5e7eb;
+}
+
+.live-map-status {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+    font-size: 0.85rem;
+}
+
+.live-map-dot {
+    background: transparent;
+    border: 0;
+}
+
+.live-map-dot-inner {
+    display: block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.35);
+}

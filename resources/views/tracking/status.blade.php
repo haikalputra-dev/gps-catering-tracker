@@ -76,6 +76,44 @@
         </div>
     @endif
 
+    {{--
+        Live-map (Packet 12, AR-55 / AR-56 / AR-57). Customer surface
+        is gated on `in_transit` only; before dispatch there is no
+        courier position to show, and after delivery/cancellation the
+        tracking page transitions to a terminal state. The endpoint is
+        session-scoped and returns 401 for any stale/expired session.
+    --}}
+    @if($isInTransit)
+        <div class="card">
+            <h2>Live map</h2>
+            <p style="margin:0 0 8px;color:#6b7280;font-size:0.9rem;">
+                Auto-refreshing every {{ (int) (config('telemetry.polling_interval_ms', 3000) / 1000) }}s.
+            </p>
+            <div
+                id="tracking-live-map"
+                class="live-map-container"
+                data-live-map
+                data-endpoint="{{ route('tracking.telemetry.latest') }}"
+                data-interval="{{ (int) config('telemetry.polling_interval_ms', 3000) }}"
+                data-kitchen-latitude="{{ $delivery->kitchen_latitude }}"
+                data-kitchen-longitude="{{ $delivery->kitchen_longitude }}"
+                data-customer-latitude="{{ $delivery->customer_latitude }}"
+                data-customer-longitude="{{ $delivery->customer_longitude }}"
+                data-tile-url="{{ config('map.tile_url') }}"
+                data-tile-attribution="{{ config('map.tile_attribution') }}"
+                data-tile-max-zoom="{{ (int) config('map.tile_max_zoom', 19) }}"
+                data-status-target="tracking-live-map-status"
+            ></div>
+            <p
+                id="tracking-live-map-status"
+                class="live-map-status"
+                style="margin:8px 0 0;color:#4b5563;font-size:0.85rem;"
+            >
+                Waiting for the first live position.
+            </p>
+        </div>
+    @endif
+
     <div class="card">
         <h2>Timeline</h2>
         <ol class="timeline">

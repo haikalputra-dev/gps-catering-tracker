@@ -64,4 +64,55 @@ return [
         'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
     ),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Live-map polling (AR-55, AR-57)
+    |--------------------------------------------------------------------------
+    |
+    | `polling_interval_ms` is the default browser polling cadence for the
+    | live-map JSON endpoints (`GET /deliveries/{delivery}/telemetry/latest`
+    | and `GET /track/telemetry/latest`). The value is emitted as a
+    | `data-interval` attribute on the map container; individual pages may
+    | override it there without touching the config.
+    |
+    | `polling_max_per_minute` is the throttle cap applied to both endpoints
+    | (`throttle:60,1`). Keep this aligned with the interval: a 3000 ms
+    | interval implies at most 20 polls/minute per client, so the 60/min cap
+    | leaves generous headroom for a small handful of concurrent viewers.
+    |
+    */
+
+    'polling_interval_ms' => (int) env('TELEMETRY_POLLING_INTERVAL_MS', 3000),
+
+    'polling_max_per_minute' => (int) env('TELEMETRY_POLLING_MAX_PER_MINUTE', 60),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Telemetry simulator (AR-54)
+    |--------------------------------------------------------------------------
+    |
+    | `simulator_base_url` is the origin used by `telemetry:simulate` when
+    | POSTing to `/api/telemetry`. The command exercises the real ingestion
+    | pipeline (authentication, rate limit, ingester); it is not a direct
+    | database write. Local development typically uses `http://127.0.0.1:8000`
+    | matching `php artisan serve`.
+    |
+    | `simulator_default_interval_seconds`, `simulator_default_duration_seconds`,
+    | and `simulator_default_jitter_meters` are the defaults for the matching
+    | command-line options. All three may be overridden at invocation time
+    | with `--interval`, `--duration`, and `--jitter`.
+    |
+    */
+
+    'simulator_base_url' => rtrim(
+        (string) env('TELEMETRY_SIMULATOR_BASE_URL', 'http://127.0.0.1:8000'),
+        '/',
+    ),
+
+    'simulator_default_interval_seconds' => (int) env('TELEMETRY_SIMULATOR_INTERVAL', 2),
+
+    'simulator_default_duration_seconds' => (int) env('TELEMETRY_SIMULATOR_DURATION', 120),
+
+    'simulator_default_jitter_meters' => (float) env('TELEMETRY_SIMULATOR_JITTER', 0.0),
+
 ];
