@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\Owner\UserController as OwnerUserController;
 use Illuminate\Support\Facades\Auth;
@@ -60,5 +61,16 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::post('/', [CustomerController::class, 'store'])->name('store');
         Route::get('/{customer}/edit', [CustomerController::class, 'edit'])->name('edit');
         Route::put('/{customer}', [CustomerController::class, 'update'])->name('update');
+    });
+
+    Route::middleware('role:owner,staff')->prefix('deliveries')->name('deliveries.')->group(function (): void {
+        Route::get('/', [DeliveryController::class, 'index'])->name('index');
+        Route::get('/create', [DeliveryController::class, 'create'])->name('create');
+        Route::post('/', [DeliveryController::class, 'store'])->name('store');
+        Route::get('/{delivery}', [DeliveryController::class, 'show'])->name('show');
+        Route::get('/{delivery}/edit', [DeliveryController::class, 'edit'])->name('edit');
+        Route::put('/{delivery}', [DeliveryController::class, 'update'])->name('update');
+        Route::post('/{delivery}/schedule', [DeliveryController::class, 'schedule'])->name('schedule');
+        Route::post('/{delivery}/cancel', [DeliveryController::class, 'cancel'])->name('cancel');
     });
 });

@@ -4,6 +4,95 @@ Chronological, human-readable summary of application-visible changes.
 For code diffs see `git log`. For rationale see the decision log and
 the ADRs.
 
+## 2026-07-30 - Packet 07 - Delivery orders
+
+### Added
+
+- Migration `2026_07_30_062930_create_deliveries_table` creating the
+  `deliveries` table with a five-state status column (`draft`,
+  `scheduled`, `in_transit`, `delivered`, `cancelled`), unique
+  nullable `receipt_number varchar(20)`, ten snapshot columns
+  (five kitchen, five customer), audit columns for scheduling and
+  cancellation, and FKs to `kitchens`, `customers`, and `users` with
+  `restrictOnDelete`.
+- `App\Domain\Delivery\DeliveryStatus` backed enum with helpers
+  `isEditable`, `isActiveForConcurrency`, `isTerminal`, `label`,
+  `canTransitionTo`, `activeCases`, `terminalCases`, `values`.
+- `App\Domain\Delivery\ReceiptNumberGenerator` producing
+  `DEL-YYYYMMDD-XXXX` receipts using `random_int` over a 30-character
+  alphabet, with 10-retry uniqueness loop.
+- `App\Domain\Delivery\DeliveryScheduler` transactional service
+  performing `draft -> scheduled` with `lockForUpdate` on the
+  delivery, kitchen, and customer rows, atomic snapshot capture,
+  receipt issuance, and configurable concurrency cap enforcement.
+- `App\Domain\Delivery\DeliveryCanceller` transactional service
+  performing `draft/scheduled -> cancelled` with reason 3..255 chars,
+  preserving receipt and snapshot data on scheduled origin.
+- Seven typed exceptions under `app/Domain/Delivery/Exceptions/`:
+  `NotSchedulableStateException`, `MissingSchedulingFieldsException`,
+  `InactiveKitchenException`, `InactiveCustomerException`,
+  `ConcurrencyLimitReachedException`, `NotCancellableStateException`,
+  `CancellationReasonRequiredException`.
+- `App\Models\Delivery` with `DeliveryStatus` cast, decimal-7
+  coordinate casts, `kitchen`/`customer`/`createdBy`/`scheduledBy`/
+  `cancelledBy` relations, and `draft`/`scheduled`/`active`/`terminal`
+  scopes.
+- Four FormRequests under `App\Http\Requests\Delivery`:
+  `StoreDeliveryRequest`, `UpdateDeliveryRequest` (draft-only
+  `authorize()`), `ScheduleDeliveryRequest` (draft-only + fields
+  present + future), `CancelDeliveryRequest` (reason 3..255).
+- `App\Http\Controllers\DeliveryController` with 8 actions:
+  `index`, `create`, `store`, `show`, `edit`, `update`, `schedule`,
+  `cancel`. Exception-to-session-error mapping for scheduling and
+  cancellation.
+- Eight `deliveries.*` routes under `auth`, `active`,
+  `role:owner,staff` middleware. POST for `schedule` and `cancel`.
+  No DELETE, no API, no tracking route.
+- Blade views under `resources/views/deliveries/` (`index`,
+  `create`, `show`, `edit`) with partials `_form`, `_status_badge`,
+  `_audit`, `_action_buttons`. Show and index branch on status to
+  render live vs snapshot data.
+- `config/delivery.php` with five configurable keys and matching
+  `DELIVERY_*` entries in `.env.example`.
+- `DeliveryFactory` with `scheduled`, `cancelledFromDraft`,
+  `cancelledFromScheduled` states (Faker only).
+- Unit tests (`tests/Unit/Domain/Delivery/`) and feature tests
+  (`tests/Feature/Delivery/`) totalling 82 new tests, 256 new
+  assertions.
+- Documentation: `docs/deliveries/*`,
+  `docs/requirements/delivery-requirements.md`,
+  `docs/decisions/ADR-{010,011,012}*.md`,
+  `docs/task-reports/task-packet-07-report.md`.
+
+### Changed
+
+- `routes/web.php`: `DeliveryController` import + 8-route group
+  under `role:owner,staff`.
+- `resources/views/layouts/app.blade.php`: Deliveries nav link for
+  owner and staff only.
+- `.env.example`: five new `DELIVERY_*` keys appended.
+- `docs/project/decision-log.md`: AR-23..AR-28 appended with AR-27
+  revision note and Packet 07 governance-audit note.
+- README, `docs/architecture/project-structure.md`, risk register,
+  and progress documents surgically updated.
+
+### Not changed
+
+- `.env` untouched.
+- `DatabaseSeeder` untouched.
+- `/home/ubuntu/GPS-server` untouched.
+- No composer/npm package added or removed.
+- No delete route, no soft-delete column.
+
+### Test result
+
+- `php artisan test`: 235 passed, 653 assertions.
+
+### Migration status
+
+- MySQL: `2026_07_30_062930_create_deliveries_table` applied
+  2026-07-30.
+
 ## 2026-07-30 - Packet 06 - Customer management
 
 ### Added

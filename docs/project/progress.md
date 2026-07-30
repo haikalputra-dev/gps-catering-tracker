@@ -9,6 +9,7 @@ MySQL runtime integration: Complete
 Identity & access (owner/staff/courier auth): Complete
 Kitchen management (owner/staff, map picker): Complete
 Customer management (owner/staff, map picker, active/inactive): Complete
+Delivery orders (draft, schedule, cancel; receipts, snapshots, cap): Complete
 Domain implementation: In progress
 Frontend implementation: Not started
 Firmware implementation: Not started

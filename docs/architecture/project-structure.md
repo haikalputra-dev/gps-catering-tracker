@@ -101,12 +101,44 @@ See `docs/customers/customer-management.md`,
 `docs/customers/customer-phone-and-privacy.md`, and
 `docs/decisions/ADR-009-customer-entity-and-lifecycle.md`.
 
+## Delivery Slice (Packet 07)
+
+The delivery slice introduces the operational unit of the tracker: a
+five-state finite state machine, three implemented transitions
+(`draft -> scheduled`, `draft -> cancelled`, `scheduled -> cancelled`),
+receipt-number issuance, atomic kitchen and customer snapshots at
+scheduling, and a configurable concurrency cap. Owner and staff only;
+courier is deliberately excluded from Packet 07.
+
+```text
+app/Domain/Delivery/DeliveryStatus.php                Backed enum + helpers
+app/Domain/Delivery/ReceiptNumberGenerator.php        DEL-YYYYMMDD-XXXX with retry
+app/Domain/Delivery/DeliveryScheduler.php             Transactional scheduler
+app/Domain/Delivery/DeliveryCanceller.php             Cancellation service
+app/Domain/Delivery/Exceptions/                       Seven typed exceptions
+app/Models/Delivery.php                               Model + scopes + relations
+app/Http/Controllers/DeliveryController.php           8-action controller
+app/Http/Requests/Delivery/                           Four FormRequests
+config/delivery.php                                    Cap + receipt config
+database/migrations/2026_07_30_062930_create_deliveries_table.php  Schema
+database/factories/DeliveryFactory.php                Test/demo factory
+resources/views/deliveries/                           Blade views + partials
+```
+
+See `docs/deliveries/delivery-management.md`,
+`docs/deliveries/delivery-state-machine.md`,
+`docs/deliveries/receipt-numbers.md`,
+`docs/deliveries/snapshots-and-history.md`,
+`docs/deliveries/concurrency-limit.md`,
+`docs/decisions/ADR-010-delivery-state-machine.md`,
+`docs/decisions/ADR-011-delivery-snapshots-and-receipt.md`, and
+`docs/decisions/ADR-012-delivery-concurrency-configurable.md`.
+
 ## Placeholder Notice
 
 The following directories still contain only a `.gitkeep` file:
 
 ```text
-app/Domain/Delivery
 app/Domain/Tracking
 app/Domain/Device
 app/Application

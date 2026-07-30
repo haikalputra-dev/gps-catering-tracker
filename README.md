@@ -2,13 +2,17 @@
 
 ## Status
 
-**Customer management.** The repository ships a Laravel 13 baseline, a MySQL
+**Delivery orders.** The repository ships a Laravel 13 baseline, a MySQL
 runtime, role-based session authentication (Packet 04), kitchen management
-with a Leaflet-based coordinate picker (Packet 05), and (as of Packet 06)
-customer management for owner and staff with the same map picker and an
-active/inactive lifecycle. No delivery, tracking, device, pricing, or SMS
-feature is implemented yet. All remaining functional components are
-placeholders pending their specific approved task packets.
+with a Leaflet-based coordinate picker (Packet 05), customer management for
+owner and staff with the same map picker and an active/inactive lifecycle
+(Packet 06), and (as of Packet 07) delivery orders with a five-state
+lifecycle, `draft -> scheduled` and `draft/scheduled -> cancelled`
+transitions, receipt-number generation, kitchen and customer snapshots
+captured at scheduling, and a configurable concurrency cap (default 1).
+No tracking, device, pricing, or SMS feature is implemented yet. All
+remaining functional components are placeholders pending their specific
+approved task packets.
 
 ## Objective
 
@@ -79,7 +83,8 @@ npm run dev        # development / watch
 ```text
 app/Domain/Kitchen      Kitchen code normalizer (Packet 05)
 app/Domain/Customer     Customer phone normalizer (Packet 06)
-app/Domain/Delivery     Domain concepts for deliveries (placeholder)
+app/Domain/Delivery     Delivery state machine, scheduler, canceller,
+                        receipt generator, and typed exceptions (Packet 07)
 app/Domain/Tracking     Domain concepts for tracking (placeholder)
 app/Domain/Device       Domain concepts for devices (placeholder)
 app/Application         Use-case orchestration (placeholder)
@@ -100,11 +105,20 @@ guard uses the database session driver. See:
 - `docs/decisions/ADR-007-role-based-session-authentication.md` - rationale.
 - `docs/requirements/identity-access-requirements.md` - requirement matrix.
 
-## No Business Feature Implemented
+## Delivery Orders
 
-Beyond authentication, this baseline implements **no** kitchen, delivery,
-tracking, Haversine, pricing, SMS, or IoT feature. Do not treat any component
-as complete.
+Owner and staff can create delivery drafts, schedule them, and cancel them.
+Scheduling generates a receipt of the form `DEL-YYYYMMDD-XXXX`, captures
+kitchen and customer snapshots atomically, and enforces a configurable
+concurrency cap (`DELIVERY_MAX_CONCURRENT_ACTIVE`, default 1). Cancelled
+scheduled deliveries preserve their receipt and snapshots. Couriers cannot
+access the delivery surface yet. See `docs/deliveries/*` for the operator
+workflow, state machine, receipt format, snapshot rules, and concurrency
+policy.
+
+Not yet implemented: courier assignment, `in_transit` and `delivered`
+transitions, tracking, Haversine, pricing, SMS, or IoT features. Do not
+treat these as complete.
 
 ## Separate Project Warning
 
