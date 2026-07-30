@@ -86,9 +86,17 @@ class DeliveryRouteTest extends TestCase
         $this->get('/api/deliveries')->assertNotFound();
     }
 
-    public function test_public_receipt_lookup_route_does_not_exist(): void
+    public function test_only_the_tracking_route_exposes_receipt_lookup(): void
     {
-        $this->get('/track')->assertNotFound();
+        // Packet 10 introduces exactly one public receipt-lookup
+        // surface: GET /track (with its POST/status/sign-out siblings).
+        // Any other lookup-shaped path must still 404 so drift cannot
+        // introduce a second, unaudited entry point.
+        $this->get('/track')->assertOk();
         $this->get('/receipts/lookup')->assertNotFound();
+        $this->get('/tracking')->assertNotFound();
+        $this->get('/lookup')->assertNotFound();
+        $this->get('/api/track')->assertNotFound();
+        $this->get('/api/tracking')->assertNotFound();
     }
 }

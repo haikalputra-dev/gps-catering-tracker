@@ -1,6 +1,6 @@
 # Project Decision Log
 
-This log records approved decisions (AR-01 through AR-41) in concise form. It
+This log records approved decisions (AR-01 through AR-46) in concise form. It
 complements the ADRs under `docs/decisions/`.
 
 | Ref   | Decision | Status |
@@ -46,6 +46,11 @@ complements the ADRs under `docs/decisions/`.
 | AR-39 | No separate `failed` state. Cancellation with reason covers all non-successful terminations. The delivery state machine remains at five values. | Approved |
 | AR-40 | Courier viewers of a delivery see the receipt number, kitchen, customer, address, phone, coordinates, notes, scheduled time, distance, and status. They do not see the fee. The show page hides the pricing block for courier viewers; the pricing block is completely absent from the rendered DOM for those viewers, not merely CSS-hidden. | Approved |
 | AR-41 | Packet 09 scope: `courier_id` column, `dispatched_at` column, `delivered_at` column, `scheduled → in_transit` transition, `in_transit → delivered` transition, `in_transit → cancelled` transition, functional courier dashboard, courier-scoped delivery visibility, and courier-role authorization on new routes. Excludes telemetry, GPS, customer-facing surfaces, real-time maps, device provisioning, SMS, and firmware. | Approved |
+| AR-42 | Customer tracking authentication is a single public form at `/track` accepting a receipt number and the last four digits of the registered phone. Server-side validation compares the submitted phone-last-4 to the snapshot `customer_phone` using `hash_equals`. Generic error message on failure prevents enumeration. Basic Laravel throttle (`throttle:10,15`, 10 attempts per 15 minutes per IP) guards the POST endpoint. Session key `tracking.delivery_id` records the authenticated delivery. Session ID is regenerated on success. Session persists until browser close. No sign-out button; a "Look up another delivery" link clears the session and returns to the form. No SMS, no signed URL, no OTP, no custom rate limiter. | Approved (revised) |
+| AR-43 | Customer status page shows receipt number, timeline with reached-state timestamps (Scheduled → In Transit → Delivered), kitchen name and address, customer name and address for confirmation, scheduled arrival time, distance, fee, and courier name and phone only when status is `in_transit`. If cancelled, cancellation timestamp and reason are shown. Internal audit fields, other deliveries, and `cancelled_by_user_id` are never shown. | Approved |
+| AR-44 | All non-draft statuses (`scheduled`, `in_transit`, `delivered`, `cancelled`) are trackable indefinitely. `draft` is never trackable because no receipt exists. | Approved |
+| AR-45 | Static page. No polling, no WebSocket, no SSE, no auto-refresh meta tag. Manual browser refresh only. Real-time updates deferred until telemetry lands. | Approved |
+| AR-46 | Packet 10 scope: three public GET/POST routes and one sign-out POST (four tracking routes total), one domain service (`TrackingAuthenticator`), one form request (`TrackingAuthenticateRequest`), one controller (`TrackingController`), two Blade views (`form.blade.php`, `status.blade.php`), tests. No new columns. No changes to delivery domain services, state machine, or existing admin routes. | Approved |
 
 > **Governance note (2026-07-30, Packet 05):** Entries AR-16 through AR-20 were introduced by Packet 04 without Project Manager approval. They are retained here for auditability but are voided and MUST NOT be used to justify implementation choices. Only decisions explicitly approved by the Project Manager may be recorded as approved Approval Requests. The Packet 04 implementation behaviour is documented in ADR-007 and its report; it stands as delivered code but not as an approved decision.
 
@@ -56,6 +61,8 @@ complements the ADRs under `docs/decisions/`.
 > **Governance audit (2026-07-30, Packet 08):** The AR-29 through AR-40 range was inspected before implementation. No entries existed between AR-29 and AR-40 prior to this packet; there were no invalid unapproved decisions to void. AR-29 through AR-33 are recorded here as the newly approved decisions for Packet 08. AR-29 is marked "Approved (revised)" because it refines AR-04's implicit rounding into an explicit, configurable rule; the underlying fee semantics remain compatible with AR-04.
 
 > **Governance audit (2026-07-30, Packet 09):** The AR-34 through AR-50 range was inspected before implementation. No entries existed between AR-34 and AR-50 prior to this packet; there were no invalid unapproved decisions to void. AR-34 through AR-41 are recorded here as the newly approved decisions for Packet 09. AR-38 is marked "Approved (revised)" because it broadens Packet 07's cancellation scope from `{draft, scheduled}` to `{draft, scheduled, in_transit}` and adds a role-and-ownership rule permitting the assigned courier to cancel their own `in_transit` delivery; the underlying cancellation-preserves-frozen-values semantics from AR-26 and AR-30 remain intact.
+
+> **Governance audit (2026-07-30, Packet 10):** The AR-42 through AR-55 range was inspected before implementation. No entries existed between AR-42 and AR-55 prior to this packet; there were no invalid unapproved decisions to void. AR-42 through AR-46 are recorded here as the newly approved decisions for Packet 10. AR-42 is marked "Approved (revised)" because the wording ratified by the Project Manager explicitly rejects SMS delivery, signed URLs, OTP, and a custom named rate limiter as over-engineered for the prototype phase; the underlying "receipt + phone-last-4 with server-side validation" contract is unchanged.
 
 ## Explicit Rejections and Constraints
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\Owner\UserController as OwnerUserController;
+use App\Http\Controllers\TrackingController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,18 @@ Route::middleware('guest')->group(function (): void {
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->middleware(['auth', 'active'])
     ->name('logout');
+
+// Customer-facing delivery tracking (Packet 10). Fully public: no
+// customer accounts, no SMS/OTP, no signed URLs. Session-scoped after
+// receipt + phone-last-4 authentication. The POST endpoint is
+// throttled to 10 attempts per 15 minutes per IP+receipt (AR-42
+// revised).
+Route::get('/track', [TrackingController::class, 'form'])->name('tracking.form');
+Route::post('/track', [TrackingController::class, 'authenticate'])
+    ->middleware('throttle:10,15')
+    ->name('tracking.authenticate');
+Route::get('/track/status', [TrackingController::class, 'status'])->name('tracking.status');
+Route::post('/track/sign-out', [TrackingController::class, 'signOut'])->name('tracking.signOut');
 
 Route::middleware(['auth', 'active'])->group(function (): void {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

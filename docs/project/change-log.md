@@ -4,6 +4,69 @@ Chronological, human-readable summary of application-visible changes.
 For code diffs see `git log`. For rationale see the decision log and
 the ADRs.
 
+## 2026-07-30 - Packet 10 - Customer delivery tracking
+
+### Added
+
+- Public tracking surface at `/track`, backed by
+  `App\Http\Controllers\TrackingController` (`form`, `authenticate`,
+  `status`, `signOut`).
+- `App\Domain\Tracking\TrackingAuthenticator`: stateless service that
+  resolves a `Delivery` from receipt number + phone-last-4. Normalizes
+  receipts (trim, uppercase, strip separators, re-hyphenate the
+  15-character canonical form) and rejects draft rows. Uses
+  `hash_equals` on the last four snapshot digits for constant-time
+  comparison (AR-42 revised).
+- `App\Http\Requests\Tracking\TrackingAuthenticateRequest`: collapses
+  every rule failure across both fields into a single generic error
+  keyed `form`, so failure copy cannot leak which factor was wrong.
+- `resources/views/layouts/public.blade.php`: no-auth-header layout
+  used only for tracking pages, plus `resources/views/tracking/form
+  .blade.php` and `resources/views/tracking/status.blade.php`.
+- Four routes registered in `routes/web.php`:
+  `GET /track` (tracking.form), `POST /track` with `throttle:10,15`
+  (tracking.authenticate), `GET /track/status` (tracking.status),
+  `POST /track/sign-out` (tracking.signOut).
+
+### Behavior notes
+
+- No customer accounts, SMS, OTP, signed URLs, WebSockets, polling,
+  live map, or telemetry are introduced. The status page renders a
+  timeline (scheduled / dispatched / delivered / cancelled), the
+  kitchen and customer snapshots, distance and fee, and - only when
+  the delivery is `in_transit` - the assigned courier's name and
+  phone.
+- Session key `tracking.delivery_id` scopes the status page. The
+  session id is regenerated on successful authentication to prevent
+  fixation. `POST /track/sign-out` clears the key and regenerates the
+  CSRF token.
+- Draft deliveries are never trackable, even if a caller supplies a
+  hypothetical receipt.
+
+### Tests
+
+- 51 new tests / 155 new assertions across
+  `tests/Unit/Domain/Tracking/TrackingAuthenticatorTest.php`,
+  `tests/Feature/Tracking/TrackingFormTest.php`,
+  `tests/Feature/Tracking/TrackingAuthenticateTest.php`,
+  `tests/Feature/Tracking/TrackingStatusTest.php`,
+  `tests/Feature/Tracking/TrackingSignOutTest.php`, and
+  `tests/Feature/Tracking/TrackingThrottleTest.php`.
+- The Packet 07 guard test
+  `DeliveryRouteTest::test_public_receipt_lookup_route_does_not_exist`
+  was renamed to
+  `test_only_the_tracking_route_exposes_receipt_lookup` and now
+  enforces that `/track` is the single legitimate lookup surface
+  while variants (`/tracking`, `/lookup`, `/api/track`, etc.) still
+  404.
+
+### Decisions
+
+- Applies AR-42 (revised): tracking authentication uses receipt +
+  phone-last-4 only, `hash_equals` comparison, generic error copy,
+  session-scoped access, and `throttle:10,15` on the POST endpoint.
+- Applies AR-43..AR-46 as recorded in the decision log.
+
 ## 2026-07-30 - Packet 09 - Courier assignment, dispatch, and completion
 
 ### Added
