@@ -24,6 +24,8 @@ progresses.
 | R-17 | Kitchens cannot be deleted through HTTP. Cleaning up test/demo records requires a manual database operation. | Low | Deliberate design (ADR-008, AR-21). Deactivation (`is_active = false`) preserves the record and is reversible. |
 | R-18 | Default map tile provider is the public OpenStreetMap tile service, which has no SLA and community fair-use limits. | Medium | Tile URL and attribution are configurable via `MAP_TILE_URL` / `MAP_TILE_ATTRIBUTION`; switch to a hosted provider before production traffic. See `docs/kitchens/map-coordinate-selection.md`. |
 | R-19 | Coordinate authority sits entirely on the server; a browser without JS still sees the raw numeric fields but cannot use the map picker. | Low | Latitude/longitude inputs are validated server-side. Progressive enhancement is acceptable for the current internal user base. |
+| R-20 | Customers cannot be deleted through HTTP. Cleaning up test/demo records requires a manual database operation. | Low | Deliberate design (ADR-009, AR-22). Deactivation (`is_active = false`) preserves the record and is reversible. |
+| R-21 | Customer phone numbers are stored in plain text; operator screens display them (masked on list, full on edit). | Medium | Access is limited to owner and staff by role middleware. Phone is masked in the index list. Encryption at rest is out of scope for Packet 06; revisit if the deployment threat model changes. See `docs/customers/customer-phone-and-privacy.md`. |
 
 ## Notes
 

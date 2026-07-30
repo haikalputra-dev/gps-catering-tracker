@@ -75,6 +75,32 @@ See `docs/kitchens/kitchen-management.md`,
 `docs/kitchens/map-coordinate-selection.md`, and
 `docs/decisions/ADR-008-kitchen-lifecycle-and-coordinate-selection.md`.
 
+## Customer Slice (Packet 06)
+
+The customer slice adds the second first-class business entity. It
+reuses the map configuration from the kitchen slice and follows the
+same active/inactive lifecycle pattern. Delivery, pricing, tracking,
+device, and SMS work remain deferred to later packets.
+
+```text
+app/Domain/Customer/CustomerPhone.php             Phone normalizer/validator
+app/Models/Customer.php                           Model + active() scope + casts
+app/Http/Controllers/CustomerController.php       Index/create/store/edit/update
+app/Http/Requests/Customer/StoreCustomerRequest.php  Store validation + normalization
+app/Http/Requests/Customer/UpdateCustomerRequest.php Update validation + normalization
+database/migrations/2026_07_30_060000_create_customers_table.php  Schema
+database/factories/CustomerFactory.php            Test/demo factory (Faker only)
+resources/js/customer-map.js                      Leaflet integration (bundled)
+resources/views/customers/index.blade.php         Listing (active first, phone masked)
+resources/views/customers/create.blade.php        Create form
+resources/views/customers/edit.blade.php          Edit form
+resources/views/customers/_form.blade.php         Shared form with map picker
+```
+
+See `docs/customers/customer-management.md`,
+`docs/customers/customer-phone-and-privacy.md`, and
+`docs/decisions/ADR-009-customer-entity-and-lifecycle.md`.
+
 ## Placeholder Notice
 
 The following directories still contain only a `.gitkeep` file:

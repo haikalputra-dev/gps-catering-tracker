@@ -8,6 +8,7 @@ Laravel initialization: Complete
 MySQL runtime integration: Complete
 Identity & access (owner/staff/courier auth): Complete
 Kitchen management (owner/staff, map picker): Complete
+Customer management (owner/staff, map picker, active/inactive): Complete
 Domain implementation: In progress
 Frontend implementation: Not started
 Firmware implementation: Not started

@@ -4,6 +4,58 @@ Chronological, human-readable summary of application-visible changes.
 For code diffs see `git log`. For rationale see the decision log and
 the ADRs.
 
+## 2026-07-30 - Packet 06 - Customer management
+
+### Added
+
+- Migration `2026_07_30_060000_create_customers_table` with fields
+  `name` (150), `phone` (25, unique), `address` (text),
+  `latitude` (`decimal(10,7)`), `longitude` (`decimal(10,7)`),
+  `notes` (text, nullable), `is_active` (bool, indexed), timestamps.
+- `App\Models\Customer` with `HasFactory`, `active()` scope, and
+  `decimal:7` casts on latitude/longitude.
+- `App\Domain\Customer\CustomerPhone` normalizer/validator
+  (`normalize`, `isValid`, `fromInput`) with constants
+  `MIN_DIGITS=9` and `MAX_DIGITS=15`, covered by
+  `tests/Unit/Domain/Customer/CustomerPhoneTest.php`.
+- `StoreCustomerRequest` and `UpdateCustomerRequest` under
+  `App\Http\Requests\Customer` with `prepareForValidation`
+  normalization and unique-with-ignore semantics.
+- `App\Http\Controllers\CustomerController` with actions `index`,
+  `create`, `store`, `edit`, `update` only. No destroy action.
+- `database/factories/CustomerFactory.php` with default active
+  state and an `inactive()` state; Faker-only values.
+- Leaflet 1.9.4 reused (already installed) via new
+  `resources/js/customer-map.js` imported from
+  `resources/js/app.js`. No new `MAP_*` env variables; existing
+  `config/map.php` values are shared.
+- Blade views under `resources/views/customers/` (`index`,
+  `create`, `edit`, `_form`) with the map picker, phone-masking
+  index, and coordinate display.
+- Feature and unit tests under `tests/Feature/Customer/` and
+  `tests/Unit/Domain/Customer/` covering authorization,
+  management, validation, and the route surface (55 new tests).
+
+### Changed
+
+- `routes/web.php` gained a `customers` route group under
+  `auth`, `active`, `role:owner,staff` middleware with exactly five
+  named endpoints. No `customers.destroy`.
+- `resources/js/app.js` imports `./customer-map.js` in addition to
+  the existing kitchen module.
+- `resources/css/app.css` gained customer-scoped styles for the
+  map container, coordinate display, instruction paragraph, phone
+  mask, and address/notes textareas.
+- `resources/views/layouts/app.blade.php` shows a "Customers" nav
+  link to owner and staff users.
+- Governance: `AR-22` recorded and approved in
+  `docs/project/decision-log.md` before implementation.
+
+### Migrations run
+
+- MySQL: `2026_07_30_060000_create_customers_table` in batch 4,
+  applied 2026-07-30.
+
 ## 2026-07-30 - Packet 05 - Kitchen management
 
 ### Added

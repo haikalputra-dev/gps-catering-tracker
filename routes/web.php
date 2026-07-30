@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\Owner\UserController as OwnerUserController;
@@ -51,5 +52,13 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::post('/', [KitchenController::class, 'store'])->name('store');
         Route::get('/{kitchen}/edit', [KitchenController::class, 'edit'])->name('edit');
         Route::put('/{kitchen}', [KitchenController::class, 'update'])->name('update');
+    });
+
+    Route::middleware('role:owner,staff')->prefix('customers')->name('customers.')->group(function (): void {
+        Route::get('/', [CustomerController::class, 'index'])->name('index');
+        Route::get('/create', [CustomerController::class, 'create'])->name('create');
+        Route::post('/', [CustomerController::class, 'store'])->name('store');
+        Route::get('/{customer}/edit', [CustomerController::class, 'edit'])->name('edit');
+        Route::put('/{customer}', [CustomerController::class, 'update'])->name('update');
     });
 });

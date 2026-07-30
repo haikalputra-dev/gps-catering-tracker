@@ -2,12 +2,13 @@
 
 ## Status
 
-**Kitchen management.** The repository ships a Laravel 13 baseline, a MySQL
-runtime, role-based session authentication (Packet 04), and (as of Packet 05)
-kitchen management for owner and staff with a Leaflet-based coordinate picker.
-No delivery, tracking, device, pricing, customer, or SMS feature is
-implemented yet. All remaining functional components are placeholders pending
-their specific approved task packets.
+**Customer management.** The repository ships a Laravel 13 baseline, a MySQL
+runtime, role-based session authentication (Packet 04), kitchen management
+with a Leaflet-based coordinate picker (Packet 05), and (as of Packet 06)
+customer management for owner and staff with the same map picker and an
+active/inactive lifecycle. No delivery, tracking, device, pricing, or SMS
+feature is implemented yet. All remaining functional components are
+placeholders pending their specific approved task packets.
 
 ## Objective
 
@@ -76,7 +77,8 @@ npm run dev        # development / watch
 ## Architectural Directory Overview
 
 ```text
-app/Domain/Kitchen      Domain concepts for kitchens (placeholder)
+app/Domain/Kitchen      Kitchen code normalizer (Packet 05)
+app/Domain/Customer     Customer phone normalizer (Packet 06)
 app/Domain/Delivery     Domain concepts for deliveries (placeholder)
 app/Domain/Tracking     Domain concepts for tracking (placeholder)
 app/Domain/Device       Domain concepts for devices (placeholder)
