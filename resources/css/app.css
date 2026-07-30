@@ -7,3 +7,29 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Kitchen coordinate-selection map (Leaflet). */
+#kitchen-map {
+    height: 360px;
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    background: #e5e7eb;
+}
+
+#kitchen-coordinate-display {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: #f3f4f6;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+    font-size: 0.9rem;
+    color: #111827;
+}
+
+.kitchen-map-instruction {
+    margin-top: 6px;
+    color: #4b5563;
+    font-size: 0.9rem;
+}

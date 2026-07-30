@@ -7,7 +7,8 @@ VPS audit: Complete
 Laravel initialization: Complete
 MySQL runtime integration: Complete
 Identity & access (owner/staff/courier auth): Complete
-Domain implementation: Not started
+Kitchen management (owner/staff, map picker): Complete
+Domain implementation: In progress
 Frontend implementation: Not started
 Firmware implementation: Not started
 IoT integration: Not started

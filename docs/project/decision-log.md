@@ -20,11 +20,14 @@ complements the ADRs under `docs/decisions/`.
 | AR-13 | Application timezone is Asia/Jakarta. | Approved |
 | AR-14 | No production feature implemented before its specific task packet. | Approved |
 | AR-15 | Runtime baseline: Laravel 13, PHP 8.3.32, MySQL 8.0.46 (see ADR-001). | Approved |
-| AR-16 | Role-based session auth: owner/staff/courier on default `web` guard, custom `role` column, no permission package (see ADR-007). | Approved |
-| AR-17 | Initial owner is created only via the `app:create-owner` Artisan command with hidden password prompts; no CLI password arguments. | Approved |
-| AR-18 | Owner accounts cannot be created, edited, demoted or deactivated through the web UI. | Approved |
-| AR-19 | No permanent user delete route; account lifecycle is managed via `is_active` only. | Approved |
-| AR-20 | Login errors are generic and rate-limited at 5 attempts / 60s per email+IP. | Approved |
+| AR-16 | ~~Role-based session auth: owner/staff/courier on default `web` guard, custom `role` column, no permission package (see ADR-007).~~ | **Void — created without Project Manager approval** |
+| AR-17 | ~~Initial owner is created only via the `app:create-owner` Artisan command with hidden password prompts; no CLI password arguments.~~ | **Void — created without Project Manager approval** |
+| AR-18 | ~~Owner accounts cannot be created, edited, demoted or deactivated through the web UI.~~ | **Void — created without Project Manager approval** |
+| AR-19 | ~~No permanent user delete route; account lifecycle is managed via `is_active` only.~~ | **Void — created without Project Manager approval** |
+| AR-20 | ~~Login errors are generic and rate-limited at 5 attempts / 60s per email+IP.~~ | **Void — created without Project Manager approval** |
+| AR-21 | Kitchen records use active/inactive lifecycle with no hard deletion. | Approved |
+
+> **Governance note (2026-07-30, Packet 05):** Entries AR-16 through AR-20 were introduced by Packet 04 without Project Manager approval. They are retained here for auditability but are voided and MUST NOT be used to justify implementation choices. Only decisions explicitly approved by the Project Manager may be recorded as approved Approval Requests. The Packet 04 implementation behaviour is documented in ADR-007 and its report; it stands as delivered code but not as an approved decision.
 
 ## Explicit Rejections and Constraints
 

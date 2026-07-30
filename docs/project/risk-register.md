@@ -21,6 +21,9 @@ progresses.
 | R-14 | Session fixation and CSRF hardening rely on framework defaults plus explicit regeneration on login/logout. | Medium | Verified by `LoginTest::test_successful_login_regenerates_session_id` and logout tests; revisit if `SESSION_*` settings change. |
 | R-15 | Rate-limit key is `email + IP`; a shared NAT can spread attempts across users and slightly weaken throttling. | Low | Accepted for LAN deployment; move to `email` or `email + user-agent` key if abuse is observed. |
 | R-16 | Owner role is only prevented from being set through code paths (enum, form request, controller guard). A future contributor could bypass by adding a raw update. | Medium | Enforced in three layers; `UserManagementUpdateTest::test_owner_cannot_be_edited_through_crafted_request` guards against regression. |
+| R-17 | Kitchens cannot be deleted through HTTP. Cleaning up test/demo records requires a manual database operation. | Low | Deliberate design (ADR-008, AR-21). Deactivation (`is_active = false`) preserves the record and is reversible. |
+| R-18 | Default map tile provider is the public OpenStreetMap tile service, which has no SLA and community fair-use limits. | Medium | Tile URL and attribution are configurable via `MAP_TILE_URL` / `MAP_TILE_ATTRIBUTION`; switch to a hosted provider before production traffic. See `docs/kitchens/map-coordinate-selection.md`. |
+| R-19 | Coordinate authority sits entirely on the server; a browser without JS still sees the raw numeric fields but cannot use the map picker. | Low | Latitude/longitude inputs are validated server-side. Progressive enhancement is acceptable for the current internal user base. |
 
 ## Notes
 

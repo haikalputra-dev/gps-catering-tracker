@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\Owner\UserController as OwnerUserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -42,5 +43,13 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::post('/', [OwnerUserController::class, 'store'])->name('store');
         Route::get('/{user}/edit', [OwnerUserController::class, 'edit'])->name('edit');
         Route::put('/{user}', [OwnerUserController::class, 'update'])->name('update');
+    });
+
+    Route::middleware('role:owner,staff')->prefix('kitchens')->name('kitchens.')->group(function (): void {
+        Route::get('/', [KitchenController::class, 'index'])->name('index');
+        Route::get('/create', [KitchenController::class, 'create'])->name('create');
+        Route::post('/', [KitchenController::class, 'store'])->name('store');
+        Route::get('/{kitchen}/edit', [KitchenController::class, 'edit'])->name('edit');
+        Route::put('/{kitchen}', [KitchenController::class, 'update'])->name('update');
     });
 });

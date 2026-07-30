@@ -1,1 +1,1 @@
-//
+import './kitchen-map.js';

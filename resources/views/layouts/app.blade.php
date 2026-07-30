@@ -36,6 +36,9 @@
                 @if(auth()->user()->isOwner())
                     <a href="{{ route('owner.users.index') }}">User Accounts</a>
                 @endif
+                @if(auth()->user()->isOwner() || auth()->user()->isStaff())
+                    <a href="{{ route('kitchens.index') }}">Kitchens</a>
+                @endif
             @endauth
         </div>
         <div class="right">

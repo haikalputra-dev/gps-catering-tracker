@@ -2,11 +2,12 @@
 
 ## Status
 
-**Authentication baseline.** The repository ships a Laravel 13 baseline, a
-MySQL runtime, and (as of Packet 04) role-based session authentication with
-three roles: owner, staff and courier. No kitchen, delivery, tracking, device,
-pricing or customer feature is implemented yet. All remaining functional
-components are placeholders pending their specific approved task packets.
+**Kitchen management.** The repository ships a Laravel 13 baseline, a MySQL
+runtime, role-based session authentication (Packet 04), and (as of Packet 05)
+kitchen management for owner and staff with a Leaflet-based coordinate picker.
+No delivery, tracking, device, pricing, customer, or SMS feature is
+implemented yet. All remaining functional components are placeholders pending
+their specific approved task packets.
 
 ## Objective
 

@@ -49,12 +49,37 @@ bootstrap/app.php                           Middleware alias registration
 See `docs/authentication/role-access.md` and
 `docs/decisions/ADR-007-role-based-session-authentication.md`.
 
+## Kitchen Slice (Packet 05)
+
+The kitchen slice adds the first business entity with a coordinate
+picker. Delivery, pricing, customer, tracking, device, and SMS work
+remain deferred to later packets.
+
+```text
+app/Domain/Kitchen/KitchenCode.php               Code normalizer/validator
+app/Models/Kitchen.php                           Model + active() scope + casts
+app/Http/Controllers/KitchenController.php       Index/create/store/edit/update
+app/Http/Requests/Kitchen/StoreKitchenRequest.php  Store validation + normalization
+app/Http/Requests/Kitchen/UpdateKitchenRequest.php Update validation + normalization
+database/migrations/2026_07_30_042022_create_kitchens_table.php  Schema
+database/factories/KitchenFactory.php            Test/demo factory
+config/map.php                                    Map picker configuration
+resources/js/kitchen-map.js                       Leaflet integration (bundled)
+resources/views/kitchens/index.blade.php          Listing (active first, paginated)
+resources/views/kitchens/create.blade.php         Create form
+resources/views/kitchens/edit.blade.php           Edit form
+resources/views/kitchens/_form.blade.php          Shared form with map picker
+```
+
+See `docs/kitchens/kitchen-management.md`,
+`docs/kitchens/map-coordinate-selection.md`, and
+`docs/decisions/ADR-008-kitchen-lifecycle-and-coordinate-selection.md`.
+
 ## Placeholder Notice
 
 The following directories still contain only a `.gitkeep` file:
 
 ```text
-app/Domain/Kitchen
 app/Domain/Delivery
 app/Domain/Tracking
 app/Domain/Device

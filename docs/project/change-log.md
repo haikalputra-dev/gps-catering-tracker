@@ -4,6 +4,68 @@ Chronological, human-readable summary of application-visible changes.
 For code diffs see `git log`. For rationale see the decision log and
 the ADRs.
 
+## 2026-07-30 - Packet 05 - Kitchen management
+
+### Added
+
+- Migration `2026_07_30_042022_create_kitchens_table` with fields
+  `code` (30, unique), `name` (150), `address` (text), `phone` (25,
+  nullable), `latitude` (`decimal(10,7)`), `longitude` (`decimal(10,7)`),
+  `is_active` (bool, indexed), timestamps.
+- `App\Models\Kitchen` with `HasFactory`, `active()` scope, and
+  `decimal:7` casts on latitude/longitude.
+- `App\Domain\Kitchen\KitchenCode` value normalizer (`normalize`,
+  `isValid`, `fromInput`) covered by
+  `tests/Unit/Domain/Kitchen/KitchenCodeTest.php`.
+- `StoreKitchenRequest` and `UpdateKitchenRequest` under
+  `App\Http\Requests\Kitchen` with normalization in
+  `prepareForValidation()` and unique-code rule that ignores self on
+  update.
+- `App\Http\Controllers\KitchenController` with actions `index`,
+  `create`, `store`, `edit`, `update` only. No destroy action.
+- `database/factories/KitchenFactory.php` with default active state
+  and an `inactive()` state.
+- Leaflet 1.9.4 pinned via `npm install leaflet --save-exact` and
+  wired through Vite via `resources/js/kitchen-map.js` imported from
+  `resources/js/app.js`.
+- `config/map.php` and `.env.example` entries for `MAP_*` variables
+  (default center, zoom, selection zoom, tile URL, attribution, tile
+  max zoom).
+- Blade views under `resources/views/kitchens/` (`index`, `create`,
+  `edit`, `_form`) with the map picker and coordinate display.
+- Feature and unit tests under `tests/Feature/Kitchen/` and
+  `tests/Unit/Domain/Kitchen/` covering authorization, management,
+  lifecycle, validation, and the route surface (57 new tests).
+
+### Changed
+
+- `routes/web.php`: added a kitchen route group under
+  `auth`, `active`, `role:owner,staff`.
+- `resources/views/layouts/app.blade.php`: added a "Kitchens" nav link
+  visible only when the current user is owner or staff.
+- `resources/css/app.css`: added `#kitchen-map`,
+  `#kitchen-coordinate-display`, `.kitchen-map-instruction`.
+- `resources/js/app.js`: imports `./kitchen-map.js`.
+- `docs/project/decision-log.md`: AR-16..AR-20 marked Void with audit
+  note; AR-21 added and approved.
+
+### Not changed
+
+- `.env` untouched.
+- `DatabaseSeeder` untouched; do not run `db:seed`.
+- `/home/ubuntu/GPS-server` untouched.
+- No delete route, no soft-delete column, no destroy action.
+- No composer package added or removed.
+
+### Test result
+
+- `php artisan test`: 98 passed, 273 assertions.
+
+### Migration status
+
+- MySQL: `2026_07_30_042022_create_kitchens_table` in batch 3, applied
+  2026-07-30.
+
 ## 2026-07-30 - Packet 04 - Role-based session authentication
 
 ### Added
