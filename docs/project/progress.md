@@ -14,6 +14,8 @@ Delivery distance and fee (Haversine + rupiah, frozen at scheduling): Complete
 Delivery courier assignment, dispatch, and completion (state machine complete): Complete
 Customer delivery tracking (public receipt lookup, session-scoped status): Complete
 Device registration, courier binding, telemetry ingestion (authenticated, rate-limited): Complete
+Live-position tracking (polling endpoints, Leaflet live map, simulator): Complete
+Retention purge worker: Complete
 Domain implementation: In progress
 Frontend implementation: Not started
 Firmware implementation: Not started

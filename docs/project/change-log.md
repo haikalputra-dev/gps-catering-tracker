@@ -4,6 +4,39 @@ Chronological, human-readable summary of application-visible changes.
 For code diffs see `git log`. For rationale see the decision log and
 the ADRs.
 
+## 2026-07-30 - Packet 13 - Scheduled telemetry retention purge
+
+### Added
+
+- `App\Console\Commands\PurgeTelemetryCommand` registered as
+  `telemetry:purge`. Deletes rows in `telemetry_records` where
+  `received_at` is older than `config('telemetry.retention_days')`
+  days (default 30). Fulfills the deferred implementation of AR-48.
+- `--dry-run` option reports how many rows would be deleted without
+  changing the database.
+- Scheduled task in `routes/console.php` runs `telemetry:purge`
+  daily at 03:00 Asia/Jakarta.
+- `docs/telemetry/retention.md` documents the command, its options,
+  its schedule, and the scope of rows it affects.
+- 8 new feature tests in
+  `tests/Feature/Telemetry/PurgeTelemetryCommandTest.php` covering
+  dry-run behaviour, mixed-age deletion, empty-table no-op, runtime
+  retention override, and misconfiguration exit codes.
+
+### Changed
+
+- `docs/project/progress.md`: "Retention purge worker" flipped from
+  *Not started (deferred; policy documented)* to *Complete*.
+- `docs/project/decision-log.md`: closing note added for Packet 13
+  recording that AR-48's deferred implementation is now shipped and
+  no new AR is required.
+
+### Not changed
+
+- No schema migration. No new configuration key. No new route, view,
+  controller, or npm dependency. `devices`, `device_assignments`,
+  and all other tables are never touched by the purge.
+
 ## 2026-07-30 - Packet 11 - Device registration and telemetry ingestion
 
 ### Added
