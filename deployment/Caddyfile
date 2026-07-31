@@ -1,0 +1,50 @@
+# Canonical Caddy config for the GPS Catering Tracker VPS.
+#
+# This file is the source of truth. `/etc/caddy/Caddyfile` on the
+# VPS should be an exact copy. To deploy:
+#
+#   git -C /var/www/gps-catering pull
+#   sudo cp /var/www/gps-catering/deployment/Caddyfile /etc/caddy/Caddyfile
+#   sudo caddy validate --config /etc/caddy/Caddyfile
+#   sudo systemctl reload caddy
+#
+# Two site blocks:
+#
+#   http://gps-catering.duckdns.org  (port 80, plain HTTP)
+#     - POST /api/telemetry is reverse-proxied to Laravel via
+#       PHP-FPM 8.3. This is the ingest endpoint for SIM800L-
+#       equipped trackers, which cannot do modern TLS reliably
+#       (see firmware/README.md for context).
+#     - Every other port-80 request is 301-redirected to HTTPS.
+#     - Caddy's built-in ACME HTTP-01 challenge handler runs
+#       before the user routes below, so Let's Encrypt renewals
+#       are unaffected by the redirect.
+#
+#   gps-catering.duckdns.org  (port 443, HTTPS)
+#     - Standard Laravel + PHP-FPM setup. Caddy auto-provisions
+#       and renews the Let's Encrypt cert.
+
+http://gps-catering.duckdns.org {
+    root * /var/www/gps-catering/public
+
+    # Only POST /api/telemetry is served over plain HTTP.
+    @telemetry {
+        path /api/telemetry
+        method POST
+    }
+    handle @telemetry {
+        php_fastcgi unix//run/php/php8.3-fpm.sock
+    }
+
+    # Everything else on port 80 permanently redirects to HTTPS.
+    handle {
+        redir https://{host}{uri} permanent
+    }
+}
+
+gps-catering.duckdns.org {
+    root * /var/www/gps-catering/public
+    encode gzip zstd
+    php_fastcgi unix//run/php/php8.3-fpm.sock
+    file_server
+}

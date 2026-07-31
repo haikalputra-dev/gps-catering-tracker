@@ -175,6 +175,51 @@ attributes remained untouched. See the Packet 14 entry in
 
 Not yet implemented: SMS integration. Do not treat it as complete.
 
+## Deployment
+
+The VPS at `https://gps-catering.duckdns.org` runs Caddy 2 as the TLS
+terminator in front of PHP-FPM 8.3. The canonical Caddy config lives
+in `deployment/Caddyfile` — treat that file as the source of truth and
+`/etc/caddy/Caddyfile` on the VPS as the deployment target. Never edit
+`/etc/caddy/Caddyfile` directly on the box.
+
+### What `deployment/Caddyfile` contains
+
+Two site blocks:
+
+1. **`http://gps-catering.duckdns.org`** (port 80, plain HTTP): accepts
+   `POST /api/telemetry` only and reverse-proxies it to PHP-FPM. Every
+   other port-80 request is 301-redirected to HTTPS. This listener
+   exists because the SIM800L GSM/GPRS module on the motorcycle
+   tracker cannot do modern TLS reliably; see `firmware/README.md`.
+2. **`gps-catering.duckdns.org`** (port 443, HTTPS): the normal Laravel
+   app. Caddy provisions and renews the Let's Encrypt cert
+   automatically via the ACME HTTP-01 challenge on the port-80 site.
+
+### Applying to the VPS
+
+After changes land on `main`:
+
+```bash
+git -C /var/www/gps-catering pull
+sudo cp /var/www/gps-catering/deployment/Caddyfile /etc/caddy/Caddyfile
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+sudo systemctl status caddy --no-pager
+```
+
+After reloading, sanity-check the port-80 listener from any host:
+
+```bash
+# Should return an HTTP status from Laravel (401 without auth is
+# expected). The response MUST NOT be a 301/308 redirect.
+curl -sSi -X POST http://gps-catering.duckdns.org/api/telemetry \
+  -H "Content-Type: application/json" -d '{}' | head -n 1
+
+# Everything else on port 80 must 301 to HTTPS.
+curl -sSi http://gps-catering.duckdns.org/ | head -n 1
+```
+
 ## Separate Project Warning
 
 `/home/ubuntu/GPS-server` is a **separate, unrelated project**. It is out of
