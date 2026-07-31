@@ -137,43 +137,9 @@
         </nav>
     @endauth
 
+    @include('partials._flash_toasts')
+
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        @if(session('status'))
-            <div class="mb-6">
-                <x-alert variant="success">{{ session('status') }}</x-alert>
-            </div>
-        @endif
-        @if(session('success'))
-            <div class="mb-6">
-                <x-alert variant="success">{{ session('success') }}</x-alert>
-            </div>
-        @endif
-        @if(session('info'))
-            <div class="mb-6">
-                <x-alert variant="info">{{ session('info') }}</x-alert>
-            </div>
-        @endif
-        @if(session('warning'))
-            <div class="mb-6">
-                <x-alert variant="warning">{{ session('warning') }}</x-alert>
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="mb-6">
-                <x-alert variant="danger">{{ session('error') }}</x-alert>
-            </div>
-        @endif
-        @if($errors->any())
-            <div class="mb-6">
-                <x-alert variant="danger" title="Please fix the following:">
-                    <ul class="list-disc list-inside space-y-0.5">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </x-alert>
-            </div>
-        @endif
         <div class="space-y-6">
             @yield('content')
         </div>

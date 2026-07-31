@@ -102,9 +102,9 @@
             @else
                 <p class="text-slate-500 italic text-sm">No courier assigned yet.</p>
             @endif
-            <dl class="mt-4 space-y-1.5 text-sm">
-                <div class="flex gap-2">
-                    <dt class="font-medium text-slate-700 w-32">Dispatched at:</dt>
+            <dl class="mt-4 space-y-2 text-sm">
+                <div class="flex flex-wrap gap-x-2 gap-y-1">
+                    <dt class="font-medium text-slate-700 w-full sm:w-32 sm:shrink-0">Dispatched at:</dt>
                     <dd class="text-slate-900">
                         @if($delivery->dispatched_at)
                             {{ $delivery->dispatched_at->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
@@ -114,8 +114,8 @@
                         @endif
                     </dd>
                 </div>
-                <div class="flex gap-2">
-                    <dt class="font-medium text-slate-700 w-32">Delivered at:</dt>
+                <div class="flex flex-wrap gap-x-2 gap-y-1">
+                    <dt class="font-medium text-slate-700 w-full sm:w-32 sm:shrink-0">Delivered at:</dt>
                     <dd class="text-slate-900">
                         @if($delivery->delivered_at)
                             {{ $delivery->delivered_at->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}

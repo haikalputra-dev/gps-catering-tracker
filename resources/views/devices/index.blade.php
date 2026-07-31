@@ -15,16 +15,13 @@
 
     @if($devices->isEmpty())
         <x-card>
-            <div class="text-center py-8">
-                <svg class="mx-auto h-12 w-12 text-slate-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
-                </svg>
-                <h3 class="mt-2 text-sm font-semibold text-slate-900">No devices registered yet.</h3>
-                <p class="mt-1 text-sm text-slate-500">Register a GPS tracker to start ingesting telemetry.</p>
-                <div class="mt-6">
-                    <x-button :href="route('devices.create')">Register device</x-button>
-                </div>
-            </div>
+            <x-empty-state
+                icon="device-phone-mobile"
+                title="No devices registered yet."
+                description="Register a GPS tracker to start ingesting telemetry."
+                actionLabel="Register device"
+                :actionHref="route('devices.create')"
+            />
         </x-card>
     @else
         <x-card padding="p-0">

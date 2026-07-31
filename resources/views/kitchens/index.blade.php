@@ -13,16 +13,13 @@
 
     @if($kitchens->isEmpty())
         <x-card>
-            <div class="text-center py-8">
-                <svg class="mx-auto h-12 w-12 text-slate-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a.75.75 0 0 1 1.06 0L21.219 12M4.5 9.75v10.125A1.125 1.125 0 0 0 5.625 21H9.75v-4.875a1.125 1.125 0 0 1 1.125-1.125h2.25a1.125 1.125 0 0 1 1.125 1.125V21h4.125a1.125 1.125 0 0 0 1.125-1.125V9.75" />
-                </svg>
-                <h3 class="mt-2 text-sm font-semibold text-slate-900">No kitchens have been added yet.</h3>
-                <p class="mt-1 text-sm text-slate-500">Get started by registering a pickup location.</p>
-                <div class="mt-6">
-                    <x-button :href="route('kitchens.create')">Add Kitchen</x-button>
-                </div>
-            </div>
+            <x-empty-state
+                icon="building-storefront"
+                title="No kitchens have been added yet."
+                description="Get started by registering a pickup location where couriers can collect orders."
+                actionLabel="Add Kitchen"
+                :actionHref="route('kitchens.create')"
+            />
         </x-card>
     @else
         <x-card padding="p-0">

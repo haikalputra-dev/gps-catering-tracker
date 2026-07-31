@@ -109,3 +109,122 @@
 .leaflet-container {
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
+
+/* ---------------------------------------------------------------------
+ * UI polish (Packet 15c). Transitions, toast animations, and the
+ * button-loading spinner. Kept simple to avoid runtime dependencies.
+ * ------------------------------------------------------------------- */
+
+/* Reduce jank on hover/focus across common interactive surfaces. */
+a,
+button,
+[role='button'],
+input,
+select,
+textarea {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+}
+
+/* Toast stack sits fixed in the top-right corner. */
+.toast-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: min(24rem, calc(100vw - 2rem));
+    pointer-events: none;
+}
+
+.toast-container [data-toast] {
+    pointer-events: auto;
+}
+
+@keyframes toast-enter {
+    0% {
+        opacity: 0;
+        transform: translateY(-0.5rem) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes toast-exit {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-0.5rem) scale(0.98);
+    }
+}
+
+.toast-enter {
+    animation: toast-enter 200ms ease-out both;
+}
+
+.toast-exit {
+    animation: toast-exit 180ms ease-in both;
+}
+
+/* Button loading spinner. Applied by button-loading.js when a form
+ * submits. Restores automatically on turbo-style back navigation via
+ * the pageshow handler in that module. */
+@keyframes button-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.button-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.75;
+}
+
+.button-loading > * {
+    visibility: hidden;
+}
+
+.button-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1rem;
+    height: 1rem;
+    margin: -0.5rem 0 0 -0.5rem;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 9999px;
+    animation: button-spin 600ms linear infinite;
+    visibility: visible;
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+    a,
+    button,
+    [role='button'],
+    input,
+    select,
+    textarea {
+        transition-duration: 0ms;
+    }
+
+    .toast-enter,
+    .toast-exit {
+        animation-duration: 1ms;
+    }
+
+    .button-loading::after {
+        animation-duration: 2s;
+    }
+}

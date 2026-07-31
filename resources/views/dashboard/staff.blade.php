@@ -44,14 +44,13 @@
         </div>
 
         @if($recent_deliveries->isEmpty())
-            <div class="text-center py-12 px-6">
-                <x-heroicon-o-inbox class="w-12 h-12 mx-auto text-slate-300" />
-                <p class="mt-4 text-slate-600">No deliveries yet</p>
-                <a href="{{ route('deliveries.create') }}" class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-md text-sm font-medium">
-                    <x-heroicon-o-plus class="w-4 h-4" />
-                    Create your first delivery
-                </a>
-            </div>
+            <x-empty-state
+                icon="truck"
+                title="No deliveries yet"
+                description="Schedule your first delivery to see it appear here."
+                actionLabel="Create your first delivery"
+                :actionHref="route('deliveries.create')"
+            />
         @else
             <ul class="divide-y divide-slate-200">
                 @foreach($recent_deliveries as $d)

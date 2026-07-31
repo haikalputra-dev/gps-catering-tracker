@@ -17,8 +17,9 @@ Device registration, courier binding, telemetry ingestion (authenticated, rate-l
 Live-position tracking (polling endpoints, Leaflet live map, simulator): Complete
 Retention purge worker: Complete
 UI/UX redesign (Tailwind CSS 4, Inter, component library): Complete
+UI polish (icons, dashboards, empty states, toasts, mobile refinements): Complete
 Domain implementation: Complete
-Frontend implementation: In progress
+Frontend implementation: Complete
 Firmware implementation: Not started
 IoT integration: Not started
 Testing: Not started

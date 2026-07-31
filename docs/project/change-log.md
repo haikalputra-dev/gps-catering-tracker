@@ -4,6 +4,70 @@ Chronological, human-readable summary of application-visible changes.
 For code diffs see `git log`. For rationale see the decision log and
 the ADRs.
 
+## 2026-07-31 - Packet 15c - Empty states, toasts, button-loading, mobile polish
+
+### Added
+
+- `resources/views/components/empty-state.blade.php`: reusable empty
+  -state block with heroicon, title, description, and optional CTA.
+  Applied to `kitchens.index`, `customers.index`, `deliveries.index`
+  (with distinct copy for filter-vs-blank), `devices.index`,
+  `owner.users.index`, and the "Recent Deliveries" panel on the
+  owner and staff dashboards.
+- `resources/views/components/toast.blade.php`: heroicon-fronted
+  toast with a close button (`data-toast-close`) and role/aria-live
+  wiring keyed off the variant.
+- `resources/views/partials/_flash_toasts.blade.php`: single flash
+  container included by both `layouts/app.blade.php` and
+  `layouts/public.blade.php`. Reads `status`, `success`, `info`,
+  `warning`, `error`, and `$errors` and renders them as toasts.
+- `resources/js/toast.js`: attaches close handlers, auto-dismisses
+  non-error toasts after 5s (exit animation 200ms), and observes
+  the DOM for dynamically injected toasts.
+- `resources/js/button-loading.js`: adds `button-loading` class and
+  `aria-busy` to the submitter for any non-GET form submit. Restores
+  state on bfcache `pageshow`. Skips forms marked `data-no-loading`.
+
+### Changed
+
+- `resources/css/app.css`: appended a scoped transition rule for
+  interactive elements, keyframe pairs for toast enter/exit, spinner
+  keyframes for the button-loading state, and a
+  `prefers-reduced-motion` block that neutralizes animation timings.
+- `resources/js/app.js`: imports the new `toast.js` and
+  `button-loading.js` modules alongside the existing map bootstraps.
+- `resources/views/layouts/app.blade.php` and
+  `resources/views/layouts/public.blade.php`: session-flash and
+  validation-error blocks replaced with a single
+  `@include('partials._flash_toasts')`. The `x-alert`-based inline
+  block is retired.
+- `resources/views/deliveries/_action_buttons.blade.php`: the
+  courier's Start Delivery and Mark Delivered buttons are now
+  full-width on mobile (`w-full sm:w-auto`) with a taller tap area
+  (`py-3 text-base`) and heroicon glyphs. Test-locked labels
+  ("Start Delivery", "Mark Delivered") preserved.
+- `resources/views/deliveries/show.blade.php`: dispatched-at and
+  delivered-at rows in the Courier card wrap on narrow screens by
+  dropping the fixed 32-width label column below the `sm` breakpoint.
+
+### Not changed
+
+- Zero controller, service, model, migration, route, request,
+  middleware, or config changes.
+- `resources/js/live-map.js`, `resources/js/kitchen-map.js`,
+  `resources/js/customer-map.js` untouched. All map container ids,
+  `data-*` attributes, and CSS hooks preserved.
+- Test-locked strings kept verbatim: "Distance:", "Fee:", "Pricing",
+  "Track your delivery", "Receipt number", "Last 4 digits of your
+  phone", "Look up another delivery", "Start Delivery",
+  "Mark Delivered", "No active delivery".
+
+### Verification
+
+- `php artisan test` → **513 tests, 1628 assertions, all pass.**
+- `npm run build` → clean vite build. `app.css` 54.00 kB
+  (gzip 10.09 kB); `app.js` 158.91 kB (gzip 46.38 kB).
+
 ## 2026-07-31 - Packet 14 - UI/UX redesign (Tailwind CSS 4)
 
 ### Added

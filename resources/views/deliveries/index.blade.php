@@ -37,13 +37,24 @@
 
     @if($deliveries->isEmpty())
         <x-card>
-            <div class="text-center py-8">
-                <svg class="mx-auto h-12 w-12 text-slate-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177V16.5m0 0h-3M14.25 7.573a2.25 2.25 0 0 1 4.5 0" />
-                </svg>
-                <h3 class="mt-2 text-sm font-semibold text-slate-900">No deliveries match the current filter.</h3>
-                <p class="mt-1 text-sm text-slate-500">Adjust the filter or create a new delivery draft.</p>
-            </div>
+            @if($statusFilter)
+                <x-empty-state
+                    icon="funnel"
+                    title="No deliveries match the current filter."
+                    description="Adjust the filter or create a new delivery draft."
+                    actionLabel="Clear filter"
+                    :actionHref="route('deliveries.index')"
+                    actionIcon="x-mark"
+                />
+            @else
+                <x-empty-state
+                    icon="truck"
+                    title="No deliveries yet."
+                    description="Schedule your first delivery to start dispatching couriers."
+                    actionLabel="New Delivery"
+                    :actionHref="route('deliveries.create')"
+                />
+            @endif
         </x-card>
     @else
         <x-card padding="p-0">

@@ -35,6 +35,8 @@
         <form method="POST" action="{{ route('deliveries.dispatch', $delivery) }}">
             @csrf
             <x-button type="submit"
+                      icon="play"
+                      class="w-full sm:w-auto justify-center py-3 text-base"
                       onclick="return confirm('Start this delivery? You will be marked as in transit.');">
                 Start Delivery
             </x-button>
@@ -47,6 +49,8 @@
             @csrf
             <x-button type="submit"
                       variant="success"
+                      icon="check-circle"
+                      class="w-full sm:w-auto justify-center py-3 text-base"
                       onclick="return confirm('Mark this delivery as delivered? This action cannot be undone.');">
                 Mark Delivered
             </x-button>
