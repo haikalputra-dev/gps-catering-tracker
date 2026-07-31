@@ -40,6 +40,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'device.auth' => \App\Http\Middleware\AuthenticateDeviceToken::class,
             'no.cache' => \App\Http\Middleware\PreventBackButtonCache::class,
         ]);
+        
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+        ]);
 
         // Laravel's default middleware priority runs ThrottleRequests
         // before any non-prioritised middleware, which would evaluate
