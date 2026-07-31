@@ -17,52 +17,47 @@
     $currentCourierId = old('courier_id', $delivery->courier_id);
 @endphp
 
-<label for="kitchen_id">Kitchen</label>
-<select id="kitchen_id" name="kitchen_id" required>
-    <option value="">-- Select an active kitchen --</option>
-    @foreach($kitchens as $kitchen)
-        <option value="{{ $kitchen->id }}" @selected((int) $currentKitchenId === (int) $kitchen->id)>
-            {{ $kitchen->code }} — {{ $kitchen->name }}
-        </option>
-    @endforeach
-</select>
+<div class="space-y-5">
+    <x-form-field name="kitchen_id" label="Kitchen" type="select" :required="true">
+        <option value="">-- Select an active kitchen --</option>
+        @foreach($kitchens as $kitchen)
+            <option value="{{ $kitchen->id }}" @selected((int) $currentKitchenId === (int) $kitchen->id)>
+                {{ $kitchen->code }} — {{ $kitchen->name }}
+            </option>
+        @endforeach
+    </x-form-field>
 
-<label for="customer_id">Customer</label>
-<select id="customer_id" name="customer_id" required>
-    <option value="">-- Select an active customer --</option>
-    @foreach($customers as $customer)
-        <option value="{{ $customer->id }}" @selected((int) $currentCustomerId === (int) $customer->id)>
-            {{ $customer->name }} ({{ $customer->phone }})
-        </option>
-    @endforeach
-</select>
+    <x-form-field name="customer_id" label="Customer" type="select" :required="true">
+        <option value="">-- Select an active customer --</option>
+        @foreach($customers as $customer)
+            <option value="{{ $customer->id }}" @selected((int) $currentCustomerId === (int) $customer->id)>
+                {{ $customer->name }} ({{ $customer->phone }})
+            </option>
+        @endforeach
+    </x-form-field>
 
-<label for="courier_id">Courier</label>
-<select id="courier_id" name="courier_id">
-    <option value="">-- No courier assigned yet --</option>
-    @foreach($couriers as $courier)
-        <option value="{{ $courier->id }}" @selected((int) $currentCourierId === (int) $courier->id)>
-            {{ $courier->name }}
-        </option>
-    @endforeach
-</select>
-<small style="color:#6b7280;">Optional on draft. Required when scheduling (AR-37).</small>
+    <x-form-field name="courier_id" label="Courier" type="select"
+                  help="Optional on draft. Required when scheduling (AR-37).">
+        <option value="">-- No courier assigned yet --</option>
+        @foreach($couriers as $courier)
+            <option value="{{ $courier->id }}" @selected((int) $currentCourierId === (int) $courier->id)>
+                {{ $courier->name }}
+            </option>
+        @endforeach
+    </x-form-field>
 
-<label for="scheduled_at">Scheduled at (Asia/Jakarta)</label>
-<input
-    type="datetime-local"
-    id="scheduled_at"
-    name="scheduled_at"
-    value="{{ $currentScheduledAt }}"
-    style="width:100%;padding:8px;box-sizing:border-box;border:1px solid #d1d5db;border-radius:4px;"
-/>
-<small style="color:#6b7280;">Optional on draft. Required and must be in the future when scheduling.</small>
+    <x-form-field
+        name="scheduled_at"
+        label="Scheduled at (Asia/Jakarta)"
+        type="datetime-local"
+        :value="$currentScheduledAt"
+        help="Optional on draft. Required and must be in the future when scheduling." />
 
-<label for="notes">Notes</label>
-<textarea
-    id="notes"
-    name="notes"
-    rows="4"
-    maxlength="1000"
-    style="width:100%;padding:8px;box-sizing:border-box;border:1px solid #d1d5db;border-radius:4px;font-family:inherit;"
->{{ $currentNotes }}</textarea>
+    <x-form-field
+        name="notes"
+        label="Notes"
+        type="textarea"
+        :value="$currentNotes"
+        rows="4"
+        maxlength="1000" />
+</div>

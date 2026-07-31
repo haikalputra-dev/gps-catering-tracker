@@ -2,23 +2,28 @@
 
 ## Status
 
-**Delivery courier lifecycle.** The repository ships a Laravel 13 baseline,
-a MySQL runtime, role-based session authentication (Packet 04), kitchen
-management with a Leaflet-based coordinate picker (Packet 05), customer
-management for owner and staff with the same map picker and an
-active/inactive lifecycle (Packet 06), delivery orders with a five-state
-lifecycle, `draft -> scheduled` and `draft/scheduled -> cancelled`
-transitions, receipt-number generation, kitchen and customer snapshots
-captured at scheduling, and a configurable concurrency cap (default 1,
-Packet 07), a frozen straight-line Haversine `distance_km` and rupiah
-`fee_rupiah` captured at scheduling and preserved on cancellation
-(Packet 08), and (as of Packet 09) courier assignment at scheduling,
-courier-initiated `scheduled -> in_transit -> delivered` taps, mid-route
-cancellation from `in_transit`, a per-courier concurrency cap, a
-functional courier dashboard, and fee-privacy hiding fee and distance
-from courier-facing surfaces. No tracking, device, or SMS feature is
-implemented yet. All remaining functional components are placeholders
-pending their specific approved task packets.
+**UI/UX redesigned across every existing view.** The repository ships a
+Laravel 13 baseline, a MySQL runtime, role-based session authentication
+(Packet 04), kitchen management with a Leaflet coordinate picker
+(Packet 05), customer management with the same map picker and an
+active/inactive lifecycle (Packet 06), delivery orders with a
+five-state lifecycle, receipt-number generation, kitchen/customer
+snapshots captured at scheduling, and a configurable concurrency cap
+(Packet 07), a frozen Haversine `distance_km` and rupiah `fee_rupiah`
+captured at scheduling and preserved on cancellation (Packet 08),
+courier assignment at scheduling, courier-initiated
+`scheduled -> in_transit -> delivered` taps, mid-route cancellation, a
+per-courier concurrency cap, a courier dashboard, and fee-privacy for
+courier surfaces (Packet 09), a public receipt-based tracking flow
+(Packet 10), device registration with courier binding and telemetry
+ingestion (Packet 11), a Leaflet live-map surface with a polling
+telemetry endpoint and a courier simulator (Packet 12), a scheduled
+telemetry retention purge (Packet 13), and (as of Packet 14) a full
+Tailwind CSS 4 redesign of every existing view with a reusable
+component library (`alert`, `badge`, `button`, `card`, `form-field`,
+`nav-link`, `page-header`, `table`), Inter as the UI typeface, and no
+behavioural changes to any controller, service, model, migration,
+route, or JS bootstrap.
 
 ## Objective
 
@@ -157,8 +162,18 @@ their single active delivery (per the per-courier cap) and never see the
 `docs/decisions/ADR-014-courier-assignment-and-per-courier-limit.md`,
 and `docs/decisions/ADR-015-dispatch-and-completion-via-manual-taps.md`.
 
-Not yet implemented: tracking, SMS, or IoT features. Do not treat these
-as complete.
+## UI/UX
+
+The user interface uses Tailwind CSS 4 (via `@tailwindcss/vite`),
+Inter as the display typeface, and a small Blade component library
+under `resources/views/components/` (`alert`, `badge`, `button`,
+`card`, `form-field`, `nav-link`, `page-header`, `table`). Every
+existing view was rewritten against these components while the
+routes, controllers, services, JS bootstraps, and `data-*`
+attributes remained untouched. See the Packet 14 entry in
+`docs/project/change-log.md` for the full scope.
+
+Not yet implemented: SMS integration. Do not treat it as complete.
 
 ## Separate Project Warning
 

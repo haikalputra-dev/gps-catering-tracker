@@ -3,17 +3,23 @@
 @section('title', 'Edit device')
 
 @section('content')
-    <div class="card">
-        <h1>Edit device</h1>
+    <x-page-header
+        title="Edit device"
+        :subtitle="$device->identifier">
+        <x-slot:actions>
+            <x-button :href="route('devices.show', $device)" variant="secondary">Back to Device</x-button>
+        </x-slot:actions>
+    </x-page-header>
 
+    <x-card>
         <form method="POST" action="{{ route('devices.update', $device) }}">
             @csrf
             @method('PUT')
             @include('devices._form', ['device' => $device])
-            <div style="margin-top: 16px;">
-                <button type="submit">Save changes</button>
-                <a href="{{ route('devices.show', $device) }}" class="btn secondary">Cancel</a>
+            <div class="mt-6 flex items-center gap-3">
+                <x-button type="submit">Save changes</x-button>
+                <x-button :href="route('devices.show', $device)" variant="secondary">Cancel</x-button>
             </div>
         </form>
-    </div>
+    </x-card>
 @endsection

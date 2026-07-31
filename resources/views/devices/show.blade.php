@@ -3,132 +3,131 @@
 @section('title', 'Device: ' . $device->identifier)
 
 @section('content')
-    <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+    <x-page-header
+        :title="$device->identifier"
+        :subtitle="($device->model ?? 'No model recorded') . ($device->hardware_version ? ' · ' . $device->hardware_version : '')">
+        <x-slot:actions>
+            <x-button :href="route('devices.edit', $device)" variant="secondary">Edit</x-button>
+            <x-button :href="route('devices.index')" variant="secondary">Back</x-button>
+        </x-slot:actions>
+    </x-page-header>
+
+    <x-card title="Details">
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
-                <h1 style="margin-bottom: 4px;">{{ $device->identifier }}</h1>
-                <p class="placeholder" style="margin-top: 0;">
-                    {{ $device->model ?? 'No model recorded' }}
-                    @if($device->hardware_version)
-                        · {{ $device->hardware_version }}
+                <dt class="font-medium text-slate-700">Status</dt>
+                <dd class="mt-1">
+                    @if($device->is_active)
+                        <x-badge variant="success">Active</x-badge>
+                    @else
+                        <x-badge variant="danger">Inactive</x-badge>
                     @endif
-                </p>
+                </dd>
             </div>
             <div>
-                <a href="{{ route('devices.edit', $device) }}" class="btn secondary">Edit</a>
-                <a href="{{ route('devices.index') }}" class="btn secondary">Back</a>
+                <dt class="font-medium text-slate-700">Last seen</dt>
+                <dd class="mt-1 text-slate-900">{{ $device->last_seen_at?->diffForHumans() ?? 'Never' }}</dd>
             </div>
-        </div>
-
-        <p><strong>Status:</strong> {{ $device->is_active ? 'Active' : 'Inactive' }}</p>
-        <p><strong>Last seen:</strong> {{ $device->last_seen_at?->diffForHumans() ?? 'Never' }}</p>
-
-        @if($device->notes)
-            <p><strong>Notes:</strong> {{ $device->notes }}</p>
-        @endif
-    </div>
+            @if($device->notes)
+                <div class="sm:col-span-2">
+                    <dt class="font-medium text-slate-700">Notes</dt>
+                    <dd class="mt-1 text-slate-900">{{ $device->notes }}</dd>
+                </div>
+            @endif
+        </dl>
+    </x-card>
 
     @if(session('token_plain'))
-        <div class="card" style="border: 1px solid #b45309; background: #fef3c7;">
-            <h2 style="margin-top: 0;">Device API token</h2>
-            <p><strong>This is the only time this token will be shown.</strong>
-               Copy it into the device configuration now. If you lose it, rotate the token to issue a new one.</p>
-            <pre style="background: #fff; padding: 10px; border-radius: 4px; overflow-x: auto;">{{ session('token_plain') }}</pre>
-        </div>
+        <x-card class="border-amber-300 bg-amber-50">
+            <h2 class="text-base font-semibold text-amber-900">Device API token</h2>
+            <p class="mt-2 text-sm text-amber-900">
+                <strong>This is the only time this token will be shown.</strong>
+                Copy it into the device configuration now. If you lose it, rotate the token to issue a new one.
+            </p>
+            <pre class="mt-3 bg-white border border-amber-200 rounded p-3 text-xs font-mono overflow-x-auto text-slate-800">{{ session('token_plain') }}</pre>
+        </x-card>
     @endif
 
-    <div class="card">
-        <h2>API token</h2>
-        <p><strong>Token preview:</strong> <code>{{ $device->tokenPreview() }}</code></p>
-        <form method="POST" action="{{ route('devices.rotate-token', $device) }}" class="inline"
+    <x-card title="API token">
+        <p class="text-sm text-slate-700">
+            <strong class="font-medium text-slate-700">Token preview:</strong>
+            <code class="ml-1 bg-slate-100 rounded px-1.5 py-0.5 text-xs text-slate-800">{{ $device->tokenPreview() }}</code>
+        </p>
+        <form method="POST" action="{{ route('devices.rotate-token', $device) }}"
+              class="mt-4 inline-block"
               onsubmit="return confirm('Rotating will invalidate the current token. Continue?');">
             @csrf
-            <button type="submit" class="secondary">Rotate token</button>
+            <x-button type="submit" variant="secondary">Rotate token</x-button>
         </form>
-    </div>
+    </x-card>
 
-    <div class="card">
-        <h2>Courier binding</h2>
-
+    <x-card title="Courier binding">
         @if($device->currentAssignment && $device->currentAssignment->courier)
-            <p>
-                <strong>Currently bound to:</strong>
-                {{ $device->currentAssignment->courier->name }}
-                (since {{ $device->currentAssignment->assigned_at?->diffForHumans() }})
+            <p class="text-sm text-slate-700">
+                <strong class="font-medium text-slate-700">Currently bound to:</strong>
+                <span class="text-slate-900">{{ $device->currentAssignment->courier->name }}</span>
+                <span class="text-slate-500">(since {{ $device->currentAssignment->assigned_at?->diffForHumans() }})</span>
             </p>
-            <form method="POST" action="{{ route('devices.unassign', $device) }}" class="inline"
+            <form method="POST" action="{{ route('devices.unassign', $device) }}"
+                  class="mt-4 inline-block"
                   onsubmit="return confirm('Unassign this device from the courier?');">
                 @csrf
-                <button type="submit" class="secondary">Unassign</button>
+                <x-button type="submit" variant="secondary">Unassign</x-button>
             </form>
         @else
-            <p class="placeholder">This device is not currently bound to any courier.</p>
+            <p class="text-sm text-slate-500">This device is not currently bound to any courier.</p>
 
             @if($device->is_active)
-                <form method="POST" action="{{ route('devices.assign', $device) }}">
+                <form method="POST" action="{{ route('devices.assign', $device) }}" class="mt-4 space-y-4">
                     @csrf
-                    <label for="courier_id">Assign to courier</label>
-                    <select id="courier_id" name="courier_id" required>
+                    <x-form-field name="courier_id" label="Assign to courier" type="select" :required="true">
                         <option value="">— Select active courier —</option>
                         @foreach($activeCouriers as $courier)
                             <option value="{{ $courier->id }}" @selected(old('courier_id') == $courier->id)>
                                 {{ $courier->name }} ({{ $courier->email }})
                             </option>
                         @endforeach
-                    </select>
+                    </x-form-field>
 
-                    <label for="notes">Notes (optional)</label>
-                    <input type="text" id="notes" name="notes" value="{{ old('notes') }}" maxlength="500">
+                    <x-form-field
+                        name="notes"
+                        label="Notes (optional)"
+                        maxlength="500" />
 
-                    <div style="margin-top: 12px;">
-                        <button type="submit">Assign</button>
-                    </div>
+                    <x-button type="submit">Assign</x-button>
                 </form>
             @else
-                <p class="placeholder">Reactivate this device to enable courier binding.</p>
+                <p class="mt-2 text-sm text-slate-500">Reactivate this device to enable courier binding.</p>
             @endif
         @endif
-    </div>
+    </x-card>
 
-    <div class="card">
-        <h2>Assignment history</h2>
-
+    <x-card title="Assignment history" padding="p-0">
         @if($device->assignments->isEmpty())
-            <p class="placeholder">No assignments recorded yet.</p>
+            <p class="p-6 text-sm text-slate-500">No assignments recorded yet.</p>
         @else
-            <table>
-                <thead>
-                    <tr>
-                        <th>Courier</th>
-                        <th>Assigned</th>
-                        <th>Unassigned</th>
-                        <th>By</th>
-                        <th>Notes</th>
+            <x-table :headers="['Courier', 'Assigned', 'Unassigned', 'By', 'Notes']">
+                @foreach($device->assignments as $assignment)
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-slate-900 whitespace-nowrap">{{ $assignment->courier?->name ?? '—' }}</td>
+                        <td class="px-4 py-3 text-slate-600 whitespace-nowrap">{{ $assignment->assigned_at?->format('Y-m-d H:i') }}</td>
+                        <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
+                            @if($assignment->unassigned_at)
+                                {{ $assignment->unassigned_at->format('Y-m-d H:i') }}
+                            @else
+                                <em class="text-slate-500">Open</em>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
+                            {{ $assignment->assignedBy?->name ?? '—' }}
+                            @if($assignment->unassignedBy)
+                                <span class="text-slate-400">→</span> {{ $assignment->unassignedBy->name }}
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 text-slate-600">{{ $assignment->notes ?? '—' }}</td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach($device->assignments as $assignment)
-                        <tr>
-                            <td>{{ $assignment->courier?->name ?? '—' }}</td>
-                            <td>{{ $assignment->assigned_at?->format('Y-m-d H:i') }}</td>
-                            <td>
-                                @if($assignment->unassigned_at)
-                                    {{ $assignment->unassigned_at->format('Y-m-d H:i') }}
-                                @else
-                                    <em>Open</em>
-                                @endif
-                            </td>
-                            <td>
-                                {{ $assignment->assignedBy?->name ?? '—' }}
-                                @if($assignment->unassignedBy)
-                                    → {{ $assignment->unassignedBy->name }}
-                                @endif
-                            </td>
-                            <td>{{ $assignment->notes ?? '—' }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                @endforeach
+            </x-table>
         @endif
-    </div>
+    </x-card>
 @endsection

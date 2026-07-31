@@ -186,13 +186,46 @@ See `docs/deliveries/courier-assignment.md`,
 `docs/decisions/ADR-014-courier-assignment-and-per-courier-limit.md`,
 and `docs/decisions/ADR-015-dispatch-and-completion-via-manual-taps.md`.
 
+## UI/UX Redesign (Packet 14)
+
+Packet 14 replaces the Packet-01 inline-style scaffolding with a
+production-quality visual system while preserving every route,
+controller, model, migration, service, and JS bootstrap.
+
+```text
+resources/css/app.css                       @import 'tailwindcss' + @theme
+vite.config.js                              @tailwindcss/vite + Inter (Bunny)
+resources/views/components/alert.blade.php  Semantic banners
+resources/views/components/badge.blade.php  Pill badges
+resources/views/components/button.blade.php Primary/secondary/danger buttons
+resources/views/components/card.blade.php   Card surface
+resources/views/components/form-field.blade.php Text/textarea/select field
+resources/views/components/nav-link.blade.php   Top-nav link with active state
+resources/views/components/page-header.blade.php Page header slot
+resources/views/components/table.blade.php  Data table wrapper
+```
+
+Every existing Blade view (`layouts/*`, `welcome`, `auth/login`,
+`dashboard/*`, `kitchens/*`, `customers/*`, `owner/users/*`,
+`devices/*`, `deliveries/*`, `tracking/*`) was rewritten against
+this component library. The tracking status timeline was rebuilt
+as a vertical stepper. Live-map wrappers keep every `data-*`
+attribute and CSS-class hook required by
+`resources/js/{kitchen-map,customer-map,live-map}.js`, which were
+not modified. Test-locked strings (`Distance:`, `Fee:`, `Receipt
+number`, `Last 4 digits of your phone`, `Track your delivery`,
+`Look up another delivery`, status labels, and forbidden
+`leaflet`/`websocket`/`pusher`/`setInterval(` substrings on
+tracking pages) are all preserved.
+
+See `docs/project/change-log.md` (Packet 14 entry) for the full
+list of touched files.
+
 ## Placeholder Notice
 
 The following directories still contain only a `.gitkeep` file:
 
 ```text
-app/Domain/Tracking
-app/Domain/Device
 app/Application
 app/Infrastructure
 ```

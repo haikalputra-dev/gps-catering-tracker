@@ -16,8 +16,9 @@ Customer delivery tracking (public receipt lookup, session-scoped status): Compl
 Device registration, courier binding, telemetry ingestion (authenticated, rate-limited): Complete
 Live-position tracking (polling endpoints, Leaflet live map, simulator): Complete
 Retention purge worker: Complete
-Domain implementation: In progress
-Frontend implementation: Not started
+UI/UX redesign (Tailwind CSS 4, Inter, component library): Complete
+Domain implementation: Complete
+Frontend implementation: In progress
 Firmware implementation: Not started
 IoT integration: Not started
 Testing: Not started

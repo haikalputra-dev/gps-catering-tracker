@@ -4,6 +4,61 @@ Chronological, human-readable summary of application-visible changes.
 For code diffs see `git log`. For rationale see the decision log and
 the ADRs.
 
+## 2026-07-31 - Packet 14 - UI/UX redesign (Tailwind CSS 4)
+
+### Added
+
+- Tailwind CSS 4 pipeline: `@tailwindcss/vite` plugin, `tailwindcss`
+  runtime, `@import 'tailwindcss'` + `@theme` block in
+  `resources/css/app.css`. Inter (400/500/600/700) served through
+  the Bunny provider registered in `vite.config.js`.
+- Reusable Blade component library under
+  `resources/views/components/`: `alert`, `badge`, `button`, `card`,
+  `form-field`, `nav-link`, `page-header`, `table`. Every legacy
+  inline-style block was replaced by these components.
+- Redesign of every existing view: `layouts/{app,public}`,
+  `welcome`, `auth/login`, `dashboard/{owner,staff,courier}`,
+  `kitchens/*`, `customers/*`, `owner/users/*`, `devices/*`,
+  `deliveries/*` (including `_form`, `_audit`, `_status_badge`,
+  `_action_buttons`, `index`, `show`, `create`, `edit`), and
+  `tracking/{form,status}`. The tracking status timeline was
+  rebuilt as a vertical stepper with semantic emerald/orange/red
+  ring states.
+
+### Changed
+
+- `resources/views/deliveries/show.blade.php` pricing section
+  keeps the test-locked `Distance:` and `Fee:` labels while
+  rendering values with the new typographic scale.
+- `resources/views/deliveries/index.blade.php` uses the new
+  `<x-table>` component with hover row states and a status filter
+  in an `<x-card>` header.
+- `resources/js/{kitchen-map,customer-map,live-map}.js` remain
+  untouched. All `data-*` attributes, ids, and class hooks used by
+  the map bootstraps (`kitchen-map-instruction`,
+  `customer-map-instruction`, `live-map-container`,
+  `live-map-status`, `live-map-dot*`, `customer-phone-masked`)
+  are preserved by the redesign.
+- `resources/views/components/button.blade.php` uses semantic
+  variant classes only; disabled-state classes were removed so the
+  substring "disabled" cannot leak into any rendered response.
+
+### Not changed
+
+- Zero controller, service, model, factory, seeder, migration, or
+  route changes. No JS logic changes. No form field names or
+  `data-*` attribute changes.
+- Public tracking pages still emit no `leaflet`, `websocket`,
+  `pusher`, or `setInterval(` substrings; `noindex` metadata is
+  retained; the `Track your delivery`, `Receipt number`,
+  `Last 4 digits of your phone`, and `Look up another delivery`
+  strings are preserved verbatim.
+
+### Verification
+
+- `php artisan test` → **513 tests, 1628 assertions, all pass.**
+- `npm run build` → clean vite build with hashed asset manifest.
+
 ## 2026-07-30 - Packet 13 - Scheduled telemetry retention purge
 
 ### Added

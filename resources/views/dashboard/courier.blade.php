@@ -9,87 +9,98 @@
 @section('title', 'Courier Dashboard')
 
 @section('content')
-    <div class="card">
-        <h1 style="margin:0;font-size:1.4rem;">Courier Dashboard</h1>
-        <p style="margin:6px 0 0;">Welcome, {{ auth()->user()->name }}.</p>
-    </div>
+    <x-page-header
+        title="Courier Dashboard"
+        :subtitle="'Welcome, ' . auth()->user()->name . '.'" />
 
     @if($activeDelivery === null)
-        <div class="card">
-            <h2 style="margin:0 0 8px;font-size:1.1rem;">No active delivery</h2>
-            <p style="margin:0;color:#6b7280;">
-                You have no delivery assigned right now. Check back later or ask
-                the office to assign one to you.
-            </p>
-        </div>
-    @else
-        <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <x-card>
+            <div class="flex items-start gap-4">
+                <div class="rounded-full bg-slate-100 p-4">
+                    <svg class="w-8 h-8 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                    </svg>
+                </div>
                 <div>
-                    <h2 style="margin:0;font-size:1.1rem;">
+                    <h2 class="text-lg font-semibold text-slate-900">No active delivery</h2>
+                    <p class="mt-1 text-sm text-slate-600">
+                        You have no delivery assigned right now. Check back later or ask
+                        the office to assign one to you.
+                    </p>
+                </div>
+            </div>
+        </x-card>
+    @else
+        <x-card>
+            <div class="flex justify-between items-start flex-wrap gap-3">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-900">
                         Delivery #{{ $activeDelivery->id }}
                         @if($activeDelivery->receipt_number)
-                            <small style="color:#6b7280;font-weight:normal;">
-                                &middot; <code>{{ $activeDelivery->receipt_number }}</code>
-                            </small>
+                            <span class="text-sm font-normal text-slate-500">
+                                &middot; <code class="text-slate-700">{{ $activeDelivery->receipt_number }}</code>
+                            </span>
                         @endif
                     </h2>
-                    <div style="margin-top:6px;">
+                    <div class="mt-2">
                         @include('deliveries._status_badge', ['status' => $activeDelivery->status])
                     </div>
                 </div>
-                <div>
-                    <a class="btn secondary"
-                       href="{{ route('deliveries.show', $activeDelivery) }}">
-                        View details
-                    </a>
-                </div>
+                <x-button
+                    :href="route('deliveries.show', $activeDelivery)"
+                    variant="secondary">
+                    View details
+                </x-button>
             </div>
+        </x-card>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <x-card title="Pickup">
+                <p class="text-sm text-slate-700">
+                    <span class="font-semibold text-slate-900">{{ $activeDelivery->kitchen_code }}</span>
+                    &mdash; {{ $activeDelivery->kitchen_name }}
+                </p>
+                <p class="mt-1 text-sm text-slate-600">{{ $activeDelivery->kitchen_address }}</p>
+            </x-card>
+            <x-card title="Drop-off">
+                <p class="text-sm text-slate-700">
+                    <span class="font-semibold text-slate-900">{{ $activeDelivery->customer_name }}</span>
+                    <span class="text-slate-500">({{ $activeDelivery->customer_phone }})</span>
+                </p>
+                <p class="mt-1 text-sm text-slate-600">{{ $activeDelivery->customer_address }}</p>
+            </x-card>
         </div>
 
-        <div class="card">
-            <h2 style="margin:0 0 8px;font-size:1.1rem;">Pickup</h2>
-            <p style="margin:0;">
-                <strong>{{ $activeDelivery->kitchen_code }}</strong> —
-                {{ $activeDelivery->kitchen_name }}<br>
-                <span style="color:#4b5563;">{{ $activeDelivery->kitchen_address }}</span>
-            </p>
-        </div>
-
-        <div class="card">
-            <h2 style="margin:0 0 8px;font-size:1.1rem;">Drop-off</h2>
-            <p style="margin:0;">
-                <strong>{{ $activeDelivery->customer_name }}</strong>
-                ({{ $activeDelivery->customer_phone }})<br>
-                <span style="color:#4b5563;">{{ $activeDelivery->customer_address }}</span>
-            </p>
-        </div>
-
-        <div class="card">
-            <h2 style="margin:0 0 8px;font-size:1.1rem;">Schedule</h2>
-            <p style="margin:0;">
-                <strong>Scheduled for:</strong>
-                @if($activeDelivery->scheduled_at)
-                    {{ $activeDelivery->scheduled_at->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
-                    <small style="color:#6b7280;">({{ $displayTz }})</small>
-                @else
-                    <span class="placeholder">Not set</span>
+        <x-card title="Schedule">
+            <dl class="space-y-3 text-sm">
+                <div class="flex flex-wrap gap-2">
+                    <dt class="font-medium text-slate-700 w-32">Scheduled for:</dt>
+                    <dd class="text-slate-900">
+                        @if($activeDelivery->scheduled_at)
+                            {{ $activeDelivery->scheduled_at->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
+                            <span class="text-xs text-slate-500">({{ $displayTz }})</span>
+                        @else
+                            <span class="text-slate-400">Not set</span>
+                        @endif
+                    </dd>
+                </div>
+                @if($activeDelivery->status === DeliveryStatus::InTransit && $activeDelivery->dispatched_at)
+                    <div class="flex flex-wrap gap-2">
+                        <dt class="font-medium text-slate-700 w-32">Dispatched at:</dt>
+                        <dd class="text-slate-900">
+                            {{ $activeDelivery->dispatched_at->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
+                            <span class="text-xs text-slate-500">({{ $displayTz }})</span>
+                        </dd>
+                    </div>
                 @endif
-            </p>
-            @if($activeDelivery->status === DeliveryStatus::InTransit && $activeDelivery->dispatched_at)
-                <p style="margin:8px 0 0;">
-                    <strong>Dispatched at:</strong>
-                    {{ $activeDelivery->dispatched_at->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
-                    <small style="color:#6b7280;">({{ $displayTz }})</small>
-                </p>
-            @endif
-            @if($activeDelivery->notes)
-                <p style="margin:8px 0 0;">
-                    <strong>Notes:</strong><br>
-                    <span style="white-space:pre-wrap;">{{ $activeDelivery->notes }}</span>
-                </p>
-            @endif
-        </div>
+                @if($activeDelivery->notes)
+                    <div>
+                        <dt class="font-medium text-slate-700 mb-1">Notes:</dt>
+                        <dd class="text-slate-700 whitespace-pre-wrap">{{ $activeDelivery->notes }}</dd>
+                    </div>
+                @endif
+            </dl>
+        </x-card>
 
         {{--
             Fee is intentionally omitted from the courier dashboard (AR-40).
@@ -97,8 +108,8 @@
             reaches the browser for a courier session.
         --}}
 
-        <div class="card">
+        <x-card>
             @include('deliveries._action_buttons', ['delivery' => $activeDelivery])
-        </div>
+        </x-card>
     @endif
 @endsection

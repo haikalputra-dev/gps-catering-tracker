@@ -3,16 +3,22 @@
 @section('title', 'Register device')
 
 @section('content')
-    <div class="card">
-        <h1>Register device</h1>
+    <x-page-header
+        title="Register device"
+        subtitle="Add a new GPS tracker to this tenant.">
+        <x-slot:actions>
+            <x-button :href="route('devices.index')" variant="secondary">Back to Devices</x-button>
+        </x-slot:actions>
+    </x-page-header>
 
+    <x-card>
         <form method="POST" action="{{ route('devices.store') }}">
             @csrf
             @include('devices._form', ['device' => null])
-            <div style="margin-top: 16px;">
-                <button type="submit">Register device</button>
-                <a href="{{ route('devices.index') }}" class="btn secondary">Cancel</a>
+            <div class="mt-6 flex items-center gap-3">
+                <x-button type="submit">Register device</x-button>
+                <x-button :href="route('devices.index')" variant="secondary">Cancel</x-button>
             </div>
         </form>
-    </div>
+    </x-card>
 @endsection

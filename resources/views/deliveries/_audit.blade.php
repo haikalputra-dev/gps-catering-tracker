@@ -3,31 +3,38 @@
     /** @var string $displayTz */
 @endphp
 
-<div class="card">
-    <h2 style="margin:0 0 8px;font-size:1.1rem;">Audit trail</h2>
-    <p style="margin:0;">
-        <strong>Created:</strong>
-        {{ $delivery->created_at?->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
-        by {{ $delivery->createdBy?->name ?? 'unknown' }}
-    </p>
-    @if($delivery->scheduled_at_recorded)
-        <p style="margin:6px 0 0;">
-            <strong>Scheduled:</strong>
-            {{ $delivery->scheduled_at_recorded->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
-            by {{ $delivery->scheduledBy?->name ?? 'unknown' }}
-        </p>
-    @endif
-    @if($delivery->cancelled_at)
-        <p style="margin:6px 0 0;">
-            <strong>Cancelled:</strong>
-            {{ $delivery->cancelled_at->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
-            by {{ $delivery->cancelledBy?->name ?? 'unknown' }}
-        </p>
-        @if($delivery->cancellation_reason)
-            <p style="margin:6px 0 0;">
-                <strong>Reason:</strong>
-                <span style="white-space:pre-wrap;">{{ $delivery->cancellation_reason }}</span>
-            </p>
+<x-card title="Audit trail">
+    <dl class="space-y-3 text-sm">
+        <div class="flex flex-wrap gap-2">
+            <dt class="font-medium text-slate-700 w-32">Created:</dt>
+            <dd class="text-slate-900">
+                {{ $delivery->created_at?->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
+                <span class="text-slate-500">by {{ $delivery->createdBy?->name ?? 'unknown' }}</span>
+            </dd>
+        </div>
+        @if($delivery->scheduled_at_recorded)
+            <div class="flex flex-wrap gap-2">
+                <dt class="font-medium text-slate-700 w-32">Scheduled:</dt>
+                <dd class="text-slate-900">
+                    {{ $delivery->scheduled_at_recorded->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
+                    <span class="text-slate-500">by {{ $delivery->scheduledBy?->name ?? 'unknown' }}</span>
+                </dd>
+            </div>
         @endif
-    @endif
-</div>
+        @if($delivery->cancelled_at)
+            <div class="flex flex-wrap gap-2">
+                <dt class="font-medium text-slate-700 w-32">Cancelled:</dt>
+                <dd class="text-slate-900">
+                    {{ $delivery->cancelled_at->copy()->setTimezone($displayTz)->format('Y-m-d H:i') }}
+                    <span class="text-slate-500">by {{ $delivery->cancelledBy?->name ?? 'unknown' }}</span>
+                </dd>
+            </div>
+            @if($delivery->cancellation_reason)
+                <div>
+                    <dt class="font-medium text-slate-700 mb-1">Reason:</dt>
+                    <dd class="text-slate-700 whitespace-pre-wrap">{{ $delivery->cancellation_reason }}</dd>
+                </div>
+            @endif
+        @endif
+    </dl>
+</x-card>

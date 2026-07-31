@@ -3,11 +3,18 @@
 @section('title', 'New Kitchen')
 
 @section('content')
-    <div class="card">
-        <h1 style="margin:0 0 12px;font-size:1.4rem;">Add Kitchen</h1>
+    <x-page-header
+        title="Add Kitchen"
+        subtitle="Register a new pickup location.">
+        <x-slot:actions>
+            <x-button :href="route('kitchens.index')" variant="secondary">Back to Kitchens</x-button>
+        </x-slot:actions>
+    </x-page-header>
+
+    <x-card>
         <form method="POST" action="{{ route('kitchens.store') }}">
             @csrf
             @include('kitchens._form', ['kitchen' => $kitchen, 'mapConfig' => $mapConfig])
         </form>
-    </div>
+    </x-card>
 @endsection
