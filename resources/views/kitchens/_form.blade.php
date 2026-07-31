@@ -85,7 +85,7 @@
         <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
             <input type="hidden" name="is_active" value="0">
             <input type="checkbox" name="is_active" value="1" @checked($isActiveChecked)
-                   class="rounded border-slate-300 text-orange-600 focus:ring-orange-500">
+                   class="rounded border-slate-300 text-red-600 focus:ring-red-500">
             <span>Kitchen is active</span>
         </label>
         <p class="mt-1 text-xs text-slate-500">

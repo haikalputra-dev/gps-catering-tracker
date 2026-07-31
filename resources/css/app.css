@@ -91,18 +91,51 @@
     margin-top: 0.5rem;
 }
 
-.live-map-dot {
+/* Teardrop pin marker used for kitchen, customer, and courier
+ * (Packet 16). The `.live-map-pin` wrapper strips Leaflet's default
+ * white square so the SVG teardrop shows through. The optional
+ * `.live-map-pin-pulse` halo animates behind the courier pin to hint
+ * that its position is live; the halo is decorative and disabled
+ * entirely under `prefers-reduced-motion`. */
+.live-map-pin {
     background: transparent;
     border: 0;
 }
 
-.live-map-dot-inner {
+.live-map-pin > svg {
+    filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.35));
     display: block;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: 2px solid #ffffff;
-    box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.35);
+}
+
+.live-map-pin-pulse {
+    position: absolute;
+    left: 50%;
+    bottom: 2px;
+    width: 28px;
+    height: 28px;
+    margin-left: -14px;
+    border-radius: 9999px;
+    background: var(--pulse-color, #2563eb);
+    opacity: 0.35;
+    transform-origin: center;
+    animation: live-map-pulse 1600ms ease-out infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes live-map-pulse {
+    0% {
+        transform: scale(0.6);
+        opacity: 0.5;
+    }
+    70% {
+        transform: scale(1.8);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1.8);
+        opacity: 0;
+    }
 }
 
 /* Ensure Leaflet inherits the sans font. */
@@ -226,5 +259,10 @@ textarea {
 
     .button-loading::after {
         animation-duration: 2s;
+    }
+
+    .live-map-pin-pulse {
+        animation: none;
+        opacity: 0.4;
     }
 }

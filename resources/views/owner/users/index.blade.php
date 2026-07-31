@@ -44,7 +44,7 @@
                         <td class="px-4 py-3 text-slate-600 whitespace-nowrap">{{ $u->created_at?->format('Y-m-d') }}</td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <a href="{{ route('owner.users.edit', $u) }}"
-                               class="text-orange-600 hover:text-orange-700 font-medium text-sm">
+                               class="text-red-600 hover:text-red-700 font-medium text-sm">
                                 Edit
                             </a>
                         </td>

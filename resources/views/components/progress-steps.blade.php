@@ -59,16 +59,16 @@
                 $isReached = in_array($step['key'], $reached, true);
                 $isCurrent = $step['key'] === $current;
                 $circleClass = $isReached
-                    ? ($isCurrent ? 'bg-orange-600 text-white ring-4 ring-orange-100' : 'bg-orange-600 text-white')
+                    ? ($isCurrent ? 'bg-red-600 text-white ring-4 ring-red-100' : 'bg-red-600 text-white')
                     : 'bg-slate-100 text-slate-400 border-2 border-slate-200';
                 $labelClass = $isReached ? 'text-slate-900 font-semibold' : 'text-slate-400';
                 $nextReached = isset($steps[$i + 1]) && in_array($steps[$i + 1]['key'], $reached, true);
-                $lineClass = ($isReached && $nextReached) ? 'bg-orange-600' : 'bg-slate-200';
+                $lineClass = ($isReached && $nextReached) ? 'bg-red-600' : 'bg-slate-200';
                 $ts = $formatTs($timestamps[$step['ts']] ?? null);
             @endphp
             <div class="flex flex-col items-center flex-1 min-w-0">
                 <div class="flex items-center w-full">
-                    <div class="flex-1 h-0.5 {{ $i === 0 ? 'bg-transparent' : ($isReached ? 'bg-orange-600' : 'bg-slate-200') }}"></div>
+                    <div class="flex-1 h-0.5 {{ $i === 0 ? 'bg-transparent' : ($isReached ? 'bg-red-600' : 'bg-slate-200') }}"></div>
                     <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 {{ $circleClass }}">
                         @if($isReached && ! $isCurrent)
                             <x-heroicon-s-check class="w-6 h-6" />
@@ -95,9 +95,9 @@
                 @php
                     $isReached = in_array($step['key'], $reached, true);
                     $isCurrent = $step['key'] === $current;
-                    $ringClass = $isCurrent ? ' ring-4 ring-orange-100' : '';
+                    $ringClass = $isCurrent ? ' ring-4 ring-red-100' : '';
                     $circleClass = $isReached
-                        ? 'bg-orange-600 text-white' . $ringClass
+                        ? 'bg-red-600 text-white' . $ringClass
                         : 'bg-slate-100 text-slate-400 border-2 border-slate-200';
                     $labelClass = $isReached ? 'text-slate-900 font-semibold' : 'text-slate-400';
                 @endphp

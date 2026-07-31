@@ -57,11 +57,11 @@
             </div>
 
             @if($etaMinutes !== null)
-                <div class="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-orange-50 border border-orange-200 rounded-lg">
-                    <x-heroicon-o-clock class="w-5 h-5 text-orange-600" />
+                <div class="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 rounded-lg">
+                    <x-heroicon-o-clock class="w-5 h-5 text-red-600" />
                     <p class="text-sm text-slate-900">
                         Arriving in approximately
-                        <span class="font-bold text-orange-700">{{ $etaMinutes }} min</span>
+                        <span class="font-bold text-red-700">{{ $etaMinutes }} min</span>
                     </p>
                 </div>
                 <p class="mt-2 text-xs text-slate-500">Rough estimate based on straight-line distance.</p>
@@ -116,13 +116,13 @@
                 Your courier
             </h2>
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center shrink-0 text-orange-700 font-semibold text-lg">
+                <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center shrink-0 text-red-700 font-semibold text-lg">
                     {{ mb_strtoupper(mb_substr($delivery->courier->name, 0, 1)) }}
                 </div>
                 <div class="min-w-0">
                     <p class="font-semibold text-slate-900">{{ $delivery->courier->name }}</p>
                     @if(!empty($delivery->courier->phone))
-                        <a href="tel:{{ $delivery->courier->phone }}" class="inline-flex items-center gap-1.5 text-sm text-orange-700 hover:text-orange-800 font-medium mt-1">
+                        <a href="tel:{{ $delivery->courier->phone }}" class="inline-flex items-center gap-1.5 text-sm text-red-700 hover:text-red-800 font-medium mt-1">
                             <x-heroicon-o-phone class="w-4 h-4" />
                             {{ $delivery->courier->phone }}
                         </a>
