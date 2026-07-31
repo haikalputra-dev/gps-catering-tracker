@@ -17,7 +17,7 @@
 <body class="bg-white text-slate-900 antialiased font-sans min-h-full flex flex-col">
     {{-- Sticky top nav --}}
     <nav class="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-3">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
             <a href="{{ route('welcome') }}" class="flex items-center gap-2">
                 <x-heroicon-o-map-pin class="w-6 h-6 text-red-600" />
                 <span class="text-lg font-bold text-slate-900 hidden sm:inline">GPS Catering Tracker</span>
@@ -38,8 +38,8 @@
 
     <main class="flex-1">
         {{-- Hero --}}
-        <section class="py-16 sm:py-24 text-center max-w-3xl mx-auto px-6">
-            <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900">
+        <section class="py-16 sm:py-24 text-center max-w-3xl mx-auto px-4 sm:px-6">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
                 Real-time catering delivery tracking
             </h1>
             <p class="mt-4 text-lg text-slate-600">
@@ -67,7 +67,7 @@
 
         {{-- Features grid --}}
         <section class="py-12 bg-slate-50">
-            <div class="max-w-6xl mx-auto px-6 grid gap-6 md:grid-cols-3">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 grid gap-6 grid-cols-1 md:grid-cols-3">
                 <div class="bg-white rounded-lg border border-slate-200 p-6">
                     <div class="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
                         <x-heroicon-o-map-pin class="w-6 h-6" />
@@ -100,9 +100,9 @@
 
         {{-- How it works --}}
         <section class="py-12 bg-white">
-            <div class="max-w-6xl mx-auto px-6">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6">
                 <h2 class="text-2xl font-bold text-center mb-8 text-slate-900">How it works</h2>
-                <div class="grid md:grid-cols-3 gap-6">
+                <div class="grid gap-6 grid-cols-1 md:grid-cols-3">
                     <div class="bg-white rounded-lg border border-slate-200 p-6">
                         <div class="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center font-bold">
                             1
@@ -136,7 +136,7 @@
     </main>
 
     <footer class="bg-slate-50 border-t border-slate-200 py-8">
-        <div class="max-w-6xl mx-auto px-6 text-center text-xs text-slate-500">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 text-center text-xs text-slate-500">
             &copy; {{ date('Y') }} GPS Catering Tracker &middot;
             <a href="{{ route('tracking.form') }}" class="hover:text-red-600">Track a delivery</a>
         </div>
