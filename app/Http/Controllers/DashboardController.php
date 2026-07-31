@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\Delivery\DeliveryStatus;
 use App\Domain\Identity\UserRole;
+use App\Models\Customer;
 use App\Models\Delivery;
+use App\Models\Kitchen;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,12 +39,48 @@ class DashboardController extends Controller
 
     public function owner(): View
     {
-        return view('dashboard.owner');
+        return view('dashboard.owner', $this->officeStats());
     }
 
     public function staff(): View
     {
-        return view('dashboard.staff');
+        return view('dashboard.staff', $this->officeStats());
+    }
+
+    /**
+     * Compute the shared owner/staff dashboard statistics and recent
+     * activity feed. Kept private so it does not leak into route matrix
+     * expectations. Read-only aggregate queries only.
+     *
+     * @return array{stats: array<string, int>, recent_deliveries: \Illuminate\Support\Collection<int, \App\Models\Delivery>}
+     */
+    private function officeStats(): array
+    {
+        $stats = [
+            'kitchens_total' => Kitchen::query()->count(),
+            'kitchens_active' => Kitchen::query()->where('is_active', true)->count(),
+            'customers_total' => Customer::query()->count(),
+            'customers_active' => Customer::query()->where('is_active', true)->count(),
+            'deliveries_in_progress' => Delivery::query()->whereIn('status', [
+                DeliveryStatus::Scheduled->value,
+                DeliveryStatus::InTransit->value,
+            ])->count(),
+            'deliveries_this_week' => Delivery::query()
+                ->where('status', DeliveryStatus::Delivered->value)
+                ->where('delivered_at', '>=', now()->subDays(7))
+                ->count(),
+        ];
+
+        $recentDeliveries = Delivery::query()
+            ->with(['kitchen', 'customer'])
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get();
+
+        return [
+            'stats' => $stats,
+            'recent_deliveries' => $recentDeliveries,
+        ];
     }
 
     /**

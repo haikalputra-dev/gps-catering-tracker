@@ -94,7 +94,7 @@
     </div>
 
     <div class="pt-2 flex items-center gap-3">
-        <x-button type="submit">Save</x-button>
+        <x-button type="submit" icon="check">Save</x-button>
         <x-button :href="route('kitchens.index')" variant="secondary">Cancel</x-button>
     </div>
 </div>

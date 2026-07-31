@@ -2,6 +2,7 @@
     'variant' => 'primary',
     'type' => 'button',
     'href' => null,
+    'icon' => null,
 ])
 
 @php
@@ -17,7 +18,17 @@
 @endphp
 
 @if($href)
-    <a href="{{ $href }}" {{ $attributes->merge(['class' => $classes]) }}>{{ $slot }}</a>
+    <a href="{{ $href }}" {{ $attributes->merge(['class' => $classes]) }}>
+        @if($icon)
+            <x-dynamic-component :component="'heroicon-o-' . $icon" class="w-4 h-4" />
+        @endif
+        {{ $slot }}
+    </a>
 @else
-    <button type="{{ $type }}" {{ $attributes->merge(['class' => $classes]) }}>{{ $slot }}</button>
+    <button type="{{ $type }}" {{ $attributes->merge(['class' => $classes]) }}>
+        @if($icon)
+            <x-dynamic-component :component="'heroicon-o-' . $icon" class="w-4 h-4" />
+        @endif
+        {{ $slot }}
+    </button>
 @endif

@@ -16,7 +16,7 @@
             @csrf
             @include('devices._form', ['device' => null])
             <div class="mt-6 flex items-center gap-3">
-                <x-button type="submit">Register device</x-button>
+                <x-button type="submit" icon="check">Register device</x-button>
                 <x-button :href="route('devices.index')" variant="secondary">Cancel</x-button>
             </div>
         </form>

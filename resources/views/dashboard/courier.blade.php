@@ -10,67 +10,76 @@
 
 @section('content')
     <x-page-header
-        title="Courier Dashboard"
+        title="My Delivery"
         :subtitle="'Welcome, ' . auth()->user()->name . '.'" />
 
     @if($activeDelivery === null)
-        <x-card>
-            <div class="flex items-start gap-4">
-                <div class="rounded-full bg-slate-100 p-4">
-                    <svg class="w-8 h-8 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
-                    </svg>
-                </div>
-                <div>
-                    <h2 class="text-lg font-semibold text-slate-900">No active delivery</h2>
-                    <p class="mt-1 text-sm text-slate-600">
-                        You have no delivery assigned right now. Check back later or ask
-                        the office to assign one to you.
-                    </p>
-                </div>
-            </div>
-        </x-card>
+        <div class="bg-white rounded-lg border border-slate-200 py-16 px-6 text-center">
+            <x-heroicon-o-inbox class="w-16 h-16 mx-auto text-slate-300" />
+            <h2 class="mt-4 text-lg font-semibold text-slate-900">No active delivery</h2>
+            <p class="mt-2 text-sm text-slate-600 max-w-md mx-auto">
+                You have no delivery assigned right now. This page will update
+                once the office assigns one to you.
+            </p>
+        </div>
     @else
-        <x-card>
-            <div class="flex justify-between items-start flex-wrap gap-3">
-                <div>
-                    <h2 class="text-lg font-semibold text-slate-900">
-                        Delivery #{{ $activeDelivery->id }}
-                        @if($activeDelivery->receipt_number)
-                            <span class="text-sm font-normal text-slate-500">
-                                &middot; <code class="text-slate-700">{{ $activeDelivery->receipt_number }}</code>
-                            </span>
-                        @endif
-                    </h2>
-                    <div class="mt-2">
+        @php
+            $isScheduled = $activeDelivery->status === DeliveryStatus::Scheduled;
+            $isInTransit = $activeDelivery->status === DeliveryStatus::InTransit;
+        @endphp
+
+        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+            {{-- Hero header with receipt and status --}}
+            <div class="px-6 py-6 bg-gradient-to-r from-orange-50 to-orange-100 border-b border-slate-200">
+                <div class="flex items-start justify-between flex-wrap gap-3">
+                    <div>
+                        <p class="text-xs font-medium text-orange-700 uppercase tracking-wide">Receipt</p>
+                        <p class="mt-1 text-2xl font-bold text-slate-900">
+                            @if($activeDelivery->receipt_number)
+                                {{ $activeDelivery->receipt_number }}
+                            @else
+                                Delivery #{{ $activeDelivery->id }}
+                            @endif
+                        </p>
+                    </div>
+                    <div>
                         @include('deliveries._status_badge', ['status' => $activeDelivery->status])
                     </div>
                 </div>
-                <x-button
-                    :href="route('deliveries.show', $activeDelivery)"
-                    variant="secondary">
-                    View details
-                </x-button>
             </div>
-        </x-card>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <x-card title="Pickup">
-                <p class="text-sm text-slate-700">
-                    <span class="font-semibold text-slate-900">{{ $activeDelivery->kitchen_code }}</span>
-                    &mdash; {{ $activeDelivery->kitchen_name }}
-                </p>
-                <p class="mt-1 text-sm text-slate-600">{{ $activeDelivery->kitchen_address }}</p>
-            </x-card>
-            <x-card title="Drop-off">
-                <p class="text-sm text-slate-700">
-                    <span class="font-semibold text-slate-900">{{ $activeDelivery->customer_name }}</span>
-                    <span class="text-slate-500">({{ $activeDelivery->customer_phone }})</span>
-                </p>
-                <p class="mt-1 text-sm text-slate-600">{{ $activeDelivery->customer_address }}</p>
-            </x-card>
+            {{-- Kitchen and customer info --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200">
+                <div class="p-6">
+                    <div class="flex items-center gap-2 mb-3">
+                        <x-heroicon-o-building-storefront class="w-5 h-5 text-slate-500" />
+                        <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Pickup</span>
+                    </div>
+                    <p class="text-sm font-semibold text-slate-900">
+                        <span>{{ $activeDelivery->kitchen_code }}</span>
+                        <span class="text-slate-500">&mdash; {{ $activeDelivery->kitchen_name }}</span>
+                    </p>
+                    <p class="mt-1 text-sm text-slate-600">{{ $activeDelivery->kitchen_address }}</p>
+                </div>
+
+                <div class="p-6">
+                    <div class="flex items-center gap-2 mb-3">
+                        <x-heroicon-o-map-pin class="w-5 h-5 text-slate-500" />
+                        <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Deliver to</span>
+                    </div>
+                    <p class="text-sm font-semibold text-slate-900">{{ $activeDelivery->customer_name }}</p>
+                    <p class="mt-1 text-sm text-slate-600">{{ $activeDelivery->customer_address }}</p>
+                    @if($activeDelivery->customer_phone)
+                        <a href="tel:{{ $activeDelivery->customer_phone }}" class="mt-2 inline-flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700 font-medium">
+                            <x-heroicon-o-phone class="w-4 h-4" />
+                            {{ $activeDelivery->customer_phone }}
+                        </a>
+                    @endif
+                </div>
+            </div>
         </div>
 
+        {{-- Schedule --}}
         <x-card title="Schedule">
             <dl class="space-y-3 text-sm">
                 <div class="flex flex-wrap gap-2">
@@ -84,7 +93,7 @@
                         @endif
                     </dd>
                 </div>
-                @if($activeDelivery->status === DeliveryStatus::InTransit && $activeDelivery->dispatched_at)
+                @if($isInTransit && $activeDelivery->dispatched_at)
                     <div class="flex flex-wrap gap-2">
                         <dt class="font-medium text-slate-700 w-32">Dispatched at:</dt>
                         <dd class="text-slate-900">
@@ -111,5 +120,12 @@
         <x-card>
             @include('deliveries._action_buttons', ['delivery' => $activeDelivery])
         </x-card>
+
+        <div>
+            <x-button :href="route('deliveries.show', $activeDelivery)" variant="secondary">
+                <x-heroicon-o-document-text class="w-4 h-4" />
+                View full details
+            </x-button>
+        </div>
     @endif
 @endsection

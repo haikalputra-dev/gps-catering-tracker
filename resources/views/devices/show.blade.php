@@ -7,7 +7,7 @@
         :title="$device->identifier"
         :subtitle="($device->model ?? 'No model recorded') . ($device->hardware_version ? ' · ' . $device->hardware_version : '')">
         <x-slot:actions>
-            <x-button :href="route('devices.edit', $device)" variant="secondary">Edit</x-button>
+            <x-button :href="route('devices.edit', $device)" variant="secondary" icon="pencil">Edit</x-button>
             <x-button :href="route('devices.index')" variant="secondary">Back</x-button>
         </x-slot:actions>
     </x-page-header>

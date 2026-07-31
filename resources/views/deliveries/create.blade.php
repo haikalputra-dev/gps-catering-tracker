@@ -23,7 +23,7 @@
                 'customers' => $customers,
             ])
             <div class="mt-6 flex items-center gap-3">
-                <x-button type="submit">Save Draft</x-button>
+                <x-button type="submit" icon="check">Save Draft</x-button>
                 <x-button :href="route('deliveries.index')" variant="secondary">Cancel</x-button>
             </div>
         </form>

@@ -16,7 +16,7 @@
             @csrf
             @include('owner.users._form', ['mode' => 'create', 'user' => null])
             <div class="mt-6 flex items-center gap-3">
-                <x-button type="submit">Create Account</x-button>
+                <x-button type="submit" icon="check">Create Account</x-button>
                 <x-button :href="route('owner.users.index')" variant="secondary">Cancel</x-button>
             </div>
         </form>

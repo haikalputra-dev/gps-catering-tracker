@@ -1,20 +1,16 @@
 @php
     /** @var \App\Domain\Delivery\DeliveryStatus $status */
+    use App\Domain\Delivery\DeliveryStatus;
+
+    $config = match($status) {
+        DeliveryStatus::Draft => ['variant' => 'neutral', 'icon' => 'pencil-square', 'label' => 'Draft'],
+        DeliveryStatus::Scheduled => ['variant' => 'info', 'icon' => 'calendar-days', 'label' => 'Scheduled'],
+        DeliveryStatus::InTransit => ['variant' => 'warning', 'icon' => 'truck', 'label' => 'In transit'],
+        DeliveryStatus::Delivered => ['variant' => 'success', 'icon' => 'check-circle', 'label' => 'Delivered'],
+        DeliveryStatus::Cancelled => ['variant' => 'danger', 'icon' => 'x-circle', 'label' => 'Cancelled'],
+    };
 @endphp
-@switch($status)
-    @case(\App\Domain\Delivery\DeliveryStatus::Draft)
-        <x-badge variant="neutral">Draft</x-badge>
-        @break
-    @case(\App\Domain\Delivery\DeliveryStatus::Scheduled)
-        <x-badge variant="info">Scheduled</x-badge>
-        @break
-    @case(\App\Domain\Delivery\DeliveryStatus::InTransit)
-        <x-badge variant="warning">In transit</x-badge>
-        @break
-    @case(\App\Domain\Delivery\DeliveryStatus::Delivered)
-        <x-badge variant="success">Delivered</x-badge>
-        @break
-    @case(\App\Domain\Delivery\DeliveryStatus::Cancelled)
-        <x-badge variant="danger">Cancelled</x-badge>
-        @break
-@endswitch
+<x-badge :variant="$config['variant']">
+    <x-dynamic-component :component="'heroicon-o-' . $config['icon']" class="w-3.5 h-3.5" />
+    {{ $config['label'] }}
+</x-badge>

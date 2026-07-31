@@ -7,10 +7,7 @@
         title="User Accounts"
         subtitle="Only staff and courier accounts are listed. Owner accounts cannot be managed here.">
         <x-slot:actions>
-            <x-button :href="route('owner.users.create')">
-                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
+            <x-button :href="route('owner.users.create')" icon="plus">
                 Add Account
             </x-button>
         </x-slot:actions>

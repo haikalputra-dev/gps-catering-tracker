@@ -17,7 +17,7 @@
             @method('PUT')
             @include('owner.users._form', ['mode' => 'edit', 'user' => $user])
             <div class="mt-6 flex items-center gap-3">
-                <x-button type="submit">Save Changes</x-button>
+                <x-button type="submit" icon="check">Save Changes</x-button>
                 <x-button :href="route('owner.users.index')" variant="secondary">Cancel</x-button>
             </div>
         </form>

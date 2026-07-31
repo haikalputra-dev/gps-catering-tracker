@@ -31,25 +31,31 @@
                         <div class="hidden md:flex md:items-center md:gap-1">
                             @if($isCourier)
                                 <x-nav-link :href="route('courier.dashboard')" :active="request()->routeIs('courier.dashboard')">
+                                    <x-heroicon-o-home class="w-5 h-5" />
                                     My Dashboard
                                 </x-nav-link>
                             @endif
                             @if($isOffice)
                                 <x-nav-link :href="route('deliveries.index')" :active="request()->routeIs('deliveries.*')">
+                                    <x-heroicon-o-truck class="w-5 h-5" />
                                     Deliveries
                                 </x-nav-link>
                                 <x-nav-link :href="route('kitchens.index')" :active="request()->routeIs('kitchens.*')">
+                                    <x-heroicon-o-building-storefront class="w-5 h-5" />
                                     Kitchens
                                 </x-nav-link>
                                 <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
+                                    <x-heroicon-o-users class="w-5 h-5" />
                                     Customers
                                 </x-nav-link>
                             @endif
                             @if($isOwner)
                                 <x-nav-link :href="route('owner.users.index')" :active="request()->routeIs('owner.users.*')">
+                                    <x-heroicon-o-user-group class="w-5 h-5" />
                                     User Accounts
                                 </x-nav-link>
                                 <x-nav-link :href="route('devices.index')" :active="request()->routeIs('devices.*')">
+                                    <x-heroicon-o-device-phone-mobile class="w-5 h-5" />
                                     Devices
                                 </x-nav-link>
                             @endif
@@ -63,9 +69,7 @@
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <x-button type="submit" variant="ghost">
-                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"/>
-                                </svg>
+                                <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" />
                                 Log out
                             </x-button>
                         </form>
@@ -87,16 +91,34 @@
             <div id="mobile-menu" class="md:hidden hidden border-t border-slate-200">
                 <div class="px-2 pt-2 pb-3 space-y-1">
                     @if($isCourier)
-                        <a href="{{ route('courier.dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">My Dashboard</a>
+                        <a href="{{ route('courier.dashboard') }}" class="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">
+                            <x-heroicon-o-home class="w-5 h-5" />
+                            My Dashboard
+                        </a>
                     @endif
                     @if($isOffice)
-                        <a href="{{ route('deliveries.index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">Deliveries</a>
-                        <a href="{{ route('kitchens.index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">Kitchens</a>
-                        <a href="{{ route('customers.index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">Customers</a>
+                        <a href="{{ route('deliveries.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">
+                            <x-heroicon-o-truck class="w-5 h-5" />
+                            Deliveries
+                        </a>
+                        <a href="{{ route('kitchens.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">
+                            <x-heroicon-o-building-storefront class="w-5 h-5" />
+                            Kitchens
+                        </a>
+                        <a href="{{ route('customers.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">
+                            <x-heroicon-o-users class="w-5 h-5" />
+                            Customers
+                        </a>
                     @endif
                     @if($isOwner)
-                        <a href="{{ route('owner.users.index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">User Accounts</a>
-                        <a href="{{ route('devices.index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">Devices</a>
+                        <a href="{{ route('owner.users.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">
+                            <x-heroicon-o-user-group class="w-5 h-5" />
+                            User Accounts
+                        </a>
+                        <a href="{{ route('devices.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100">
+                            <x-heroicon-o-device-phone-mobile class="w-5 h-5" />
+                            Devices
+                        </a>
                     @endif
                 </div>
                 <div class="pt-3 pb-3 border-t border-slate-200">

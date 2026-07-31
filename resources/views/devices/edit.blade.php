@@ -17,7 +17,7 @@
             @method('PUT')
             @include('devices._form', ['device' => $device])
             <div class="mt-6 flex items-center gap-3">
-                <x-button type="submit">Save changes</x-button>
+                <x-button type="submit" icon="check">Save changes</x-button>
                 <x-button :href="route('devices.show', $device)" variant="secondary">Cancel</x-button>
             </div>
         </form>
