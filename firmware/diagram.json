@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "author": "GPS Catering Tracker",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp",  "top": 0,    "left": 0,   "attrs": {} },
+    { "type": "wokwi-neo-6m-gps",      "id": "gps",  "top": -140, "left": 180, "attrs": { "gpsFile": "route.gpx", "speed": "25" } },
+    { "type": "wokwi-resistor",        "id": "r1",   "top": 120,  "left": 160, "attrs": { "value": "220" } },
+    { "type": "wokwi-led",             "id": "led1", "top": 120,  "left": 260, "attrs": { "color": "red" } }
+  ],
+  "connections": [
+    [ "gps:TX",   "esp:D16",   "green",  [] ],
+    [ "gps:RX",   "esp:D17",   "green",  [] ],
+    [ "gps:VCC",  "esp:3V3",   "red",    [] ],
+    [ "gps:GND",  "esp:GND.1", "black",  [] ],
+    [ "esp:D2",   "r1:1",      "yellow", [] ],
+    [ "r1:2",     "led1:A",    "yellow", [] ],
+    [ "led1:C",   "esp:GND.2", "black",  [] ]
+  ],
+  "dependencies": {}
+}

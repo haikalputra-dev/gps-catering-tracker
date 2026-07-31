@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="GPS Catering Tracker">
+  <trk>
+    <name>Sukabumi Alun-Alun to Cikole (demo)</name>
+    <trkseg>
+      <trkpt lat="-6.92410" lon="106.92690"/>
+      <trkpt lat="-6.92418" lon="106.92798"/>
+      <trkpt lat="-6.92414" lon="106.92918"/>
+      <trkpt lat="-6.92425" lon="106.93022"/>
+      <trkpt lat="-6.92423" lon="106.93142"/>
+      <trkpt lat="-6.92432" lon="106.93247"/>
+      <trkpt lat="-6.92431" lon="106.93366"/>
+      <trkpt lat="-6.92441" lon="106.93470"/>
+      <trkpt lat="-6.92439" lon="106.93589"/>
+      <trkpt lat="-6.92450" lon="106.93695"/>
+      <trkpt lat="-6.92447" lon="106.93814"/>
+      <trkpt lat="-6.92458" lon="106.93919"/>
+      <trkpt lat="-6.92455" lon="106.94037"/>
+      <trkpt lat="-6.92466" lon="106.94142"/>
+      <trkpt lat="-6.92463" lon="106.94261"/>
+      <trkpt lat="-6.92473" lon="106.94366"/>
+      <trkpt lat="-6.92471" lon="106.94486"/>
+      <trkpt lat="-6.92481" lon="106.94590"/>
+      <trkpt lat="-6.92479" lon="106.94710"/>
+      <trkpt lat="-6.92489" lon="106.94814"/>
+      <trkpt lat="-6.92487" lon="106.94933"/>
+      <trkpt lat="-6.92497" lon="106.95038"/>
+      <trkpt lat="-6.92495" lon="106.95158"/>
+      <trkpt lat="-6.92503" lon="106.95270"/>
+      <trkpt lat="-6.92500" lon="106.95500"/>
+    </trkseg>
+  </trk>
+</gpx>
