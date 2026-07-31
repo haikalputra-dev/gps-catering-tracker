@@ -38,7 +38,7 @@
     <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
             <h2 class="text-lg font-semibold text-slate-900">Recent Deliveries</h2>
-            <a href="{{ route('deliveries.index') }}" class="text-sm text-orange-600 hover:text-orange-700 font-medium">
+            <a href="{{ route('deliveries.index') }}" class="text-sm text-red-600 hover:text-red-700 font-medium">
                 View all &rarr;
             </a>
         </div>

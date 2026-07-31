@@ -14,11 +14,15 @@ use App\Http\Controllers\TrackingTelemetryController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+// Public landing page (AR-60). Authenticated users go straight to
+// their dashboard; guests get the marketing welcome view. The route
+// is named `welcome` so blade templates and tests can reference it
+// without hard-coding the URL.
 Route::get('/', function () {
     return Auth::guard('web')->check()
         ? redirect()->route('dashboard')
-        : redirect()->route('login');
-});
+        : view('welcome');
+})->name('welcome');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');

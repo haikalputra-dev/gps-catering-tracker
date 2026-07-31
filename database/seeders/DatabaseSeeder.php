@@ -50,30 +50,30 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $owner = $this->seedUser(
-            email: 'owner@test.local',
-            name: 'Test Owner',
+            email: 'owner@catering.com',
+            name: 'Prabowo Subianto',
             phone: '081234567890',
             role: UserRole::Owner,
         );
 
         $staff = $this->seedUser(
-            email: 'staff@test.local',
-            name: 'Test Staff',
+            email: 'staff@catering.com',
+            name: 'Buna Teddy',
             phone: '081234567891',
             role: UserRole::Staff,
         );
 
         $courier = $this->seedUser(
-            email: 'courier@test.local',
-            name: 'Test Courier',
+            email: 'courier@catering.com',
+            name: 'Bahlil',
             phone: '081234567892',
             role: UserRole::Courier,
         );
 
         $kitchen = Kitchen::query()->updateOrCreate(
-            ['code' => 'KITCHEN-DEMO'],
+            ['code' => 'DAPUR-MBG'],
             [
-                'name' => 'Dapur Demo',
+                'name' => 'Dapur MBG Mandiri punya Pejabat',
                 'address' => 'Jl. Contoh No. 1, Sukabumi',
                 'phone' => '0266123456',
                 'latitude' => -6.9175000,
@@ -85,9 +85,9 @@ class DatabaseSeeder extends Seeder
         $customer = Customer::query()->updateOrCreate(
             ['phone' => '081234561234'],
             [
-                'name' => 'Test Customer',
+                'name' => 'Raffi Ahmad',
                 'address' => 'Jl. Pelanggan No. 5, Sukabumi',
-                'notes' => 'Ring the doorbell twice.',
+                'notes' => 'Yang nganterin jadi komisaris.',
                 'latitude' => -6.9350000,
                 'longitude' => 106.9450000,
                 'is_active' => true,

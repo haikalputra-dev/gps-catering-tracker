@@ -68,17 +68,32 @@ function parsePositiveInt(value, fallback) {
 }
 
 /**
- * Coloured circular divIcon. Leaflet's raster marker icons are used
- * for kitchen/customer endpoints; the moving courier marker uses a
- * lightweight SVG so a single DOM update per poll is sufficient.
+ * Coloured teardrop pin divIcon (Packet 16). The pin is an inline SVG
+ * so a single DOM node carries the fill colour and the glyph label
+ * ("K", "C", "T"), and the icon anchors at the bottom point so the
+ * tip sits exactly on the marker coordinate. Passing `{ pulse: true }`
+ * wraps the pin in a pulsing halo ring used for the moving courier
+ * marker; the ring is decorative and honours `prefers-reduced-motion`
+ * through CSS.
  */
-function makeDotIcon(colour, label) {
+function makePinIcon(colour, glyph, opts = {}) {
+    const pulse = opts.pulse === true;
+    const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36" aria-hidden="true">
+            <path d="M14 34 C6 24 2 20 2 14 A12 12 0 1 1 26 14 C26 20 22 24 14 34 Z"
+                  fill="${colour}" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/>
+            <text x="14" y="18" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif"
+                  font-size="13" font-weight="700" fill="#ffffff">${glyph}</text>
+        </svg>`;
+    const html = pulse
+        ? `<span class="live-map-pin-pulse" style="--pulse-color:${colour}"></span>${svg}`
+        : svg;
     return L.divIcon({
-        className: 'live-map-dot',
-        html: `<span class="live-map-dot-inner" style="background:${colour}" title="${label}"></span>`,
-        iconSize: [18, 18],
-        iconAnchor: [9, 9],
-        popupAnchor: [0, -9],
+        className: 'live-map-pin',
+        html,
+        iconSize: [28, 36],
+        iconAnchor: [14, 34],
+        popupAnchor: [0, -30],
     });
 }
 
@@ -162,13 +177,13 @@ export function initLiveMap(container) {
 
     if (hasKitchen) {
         L.marker([cfg.kitchenLat, cfg.kitchenLng], {
-            icon: makeDotIcon('#16a34a', 'Kitchen'),
+            icon: makePinIcon('#16a34a', 'K'),
             title: 'Kitchen',
         }).addTo(map).bindPopup('Kitchen');
     }
     if (hasCustomer) {
         L.marker([cfg.customerLat, cfg.customerLng], {
-            icon: makeDotIcon('#dc2626', 'Customer'),
+            icon: makePinIcon('#dc2626', 'C'),
             title: 'Customer',
         }).addTo(map).bindPopup('Customer');
     }
@@ -192,7 +207,7 @@ export function initLiveMap(container) {
         const latLng = L.latLng(lat, lng);
         if (courierMarker === null) {
             courierMarker = L.marker(latLng, {
-                icon: makeDotIcon('#2563eb', 'Courier'),
+                icon: makePinIcon('#2563eb', 'T', { pulse: true }),
                 title: 'Courier',
                 zIndexOffset: 500,
             }).addTo(map).bindPopup('Courier');

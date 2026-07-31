@@ -50,7 +50,7 @@
             $isLast = $i === count($steps) - 1 && ! $isCancelled;
 
             $circleClass = $isReached
-                ? ($isCurrent ? 'bg-orange-600 text-white ring-4 ring-orange-100' : 'bg-emerald-500 text-white')
+                ? ($isCurrent ? 'bg-red-600 text-white ring-4 ring-red-100' : 'bg-emerald-500 text-white')
                 : 'bg-slate-100 text-slate-400 border-2 border-slate-200';
 
             $labelClass = $isReached ? 'text-slate-900' : 'text-slate-400';

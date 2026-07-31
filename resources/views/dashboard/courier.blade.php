@@ -30,10 +30,10 @@
 
         <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
             {{-- Hero header with receipt and status --}}
-            <div class="px-6 py-6 bg-gradient-to-r from-orange-50 to-orange-100 border-b border-slate-200">
+            <div class="px-6 py-6 bg-gradient-to-r from-red-50 to-red-100 border-b border-slate-200">
                 <div class="flex items-start justify-between flex-wrap gap-3">
                     <div>
-                        <p class="text-xs font-medium text-orange-700 uppercase tracking-wide">Receipt</p>
+                        <p class="text-xs font-medium text-red-700 uppercase tracking-wide">Receipt</p>
                         <p class="mt-1 text-2xl font-bold text-slate-900">
                             @if($activeDelivery->receipt_number)
                                 {{ $activeDelivery->receipt_number }}
@@ -70,7 +70,7 @@
                     <p class="text-sm font-semibold text-slate-900">{{ $activeDelivery->customer_name }}</p>
                     <p class="mt-1 text-sm text-slate-600">{{ $activeDelivery->customer_address }}</p>
                     @if($activeDelivery->customer_phone)
-                        <a href="tel:{{ $activeDelivery->customer_phone }}" class="mt-2 inline-flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700 font-medium">
+                        <a href="tel:{{ $activeDelivery->customer_phone }}" class="mt-2 inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-700 font-medium">
                             <x-heroicon-o-phone class="w-4 h-4" />
                             {{ $activeDelivery->customer_phone }}
                         </a>

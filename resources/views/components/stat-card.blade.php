@@ -24,7 +24,7 @@
             <p class="mt-1 text-sm text-slate-500">{{ $sublabel }}</p>
         @endif
     </div>
-    <div class="p-2 bg-orange-50 rounded-lg text-orange-600">
+    <div class="p-2 bg-red-50 rounded-lg text-red-600">
         @switch($icon)
             @case('kitchen')
                 <x-heroicon-o-building-storefront class="w-6 h-6" />

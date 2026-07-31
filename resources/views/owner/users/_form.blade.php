@@ -47,7 +47,7 @@
             <input type="hidden" name="is_active" value="0">
             <input type="checkbox" name="is_active" value="1"
                    @checked(old('is_active', ($user->is_active ?? true)) == true)
-                   class="rounded border-slate-300 text-orange-600 focus:ring-orange-500">
+                   class="rounded border-slate-300 text-red-600 focus:ring-red-500">
             <span>Account active</span>
         </label>
     </div>

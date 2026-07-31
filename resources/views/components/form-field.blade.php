@@ -16,7 +16,7 @@
     $inputBase = 'block w-full rounded-md border shadow-sm px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors';
     $inputState = $hasError
         ? 'border-red-400 focus:border-red-500 focus:ring-red-500'
-        : 'border-slate-300 focus:border-orange-500 focus:ring-orange-500';
+        : 'border-slate-300 focus:border-red-500 focus:ring-red-500';
     $inputClasses = $inputBase . ' ' . $inputState;
 @endphp
 

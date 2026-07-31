@@ -21,7 +21,7 @@
                 <div class="flex justify-between h-16">
                     <div class="flex items-center gap-8">
                         <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
-                            <svg class="w-6 h-6 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <svg class="w-6 h-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/>
                             </svg>
@@ -77,7 +77,7 @@
                     <div class="md:hidden flex items-center">
                         <button type="button"
                                 onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
-                                class="inline-flex items-center justify-center p-2 rounded-md text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                class="inline-flex items-center justify-center p-2 rounded-md text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-red-500"
                                 aria-controls="mobile-menu"
                                 aria-expanded="false">
                             <span class="sr-only">Open main menu</span>

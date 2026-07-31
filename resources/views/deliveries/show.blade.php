@@ -83,7 +83,7 @@
         <x-card title="Courier">
             @if($delivery->courier)
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-semibold">
+                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-700 font-semibold">
                         {{ mb_strtoupper(mb_substr($delivery->courier->name, 0, 1)) }}
                     </div>
                     <div class="min-w-0">
@@ -92,7 +92,7 @@
                             <span class="text-slate-500 text-sm font-normal">(#{{ $delivery->courier->id }})</span>
                         </p>
                         @if($delivery->courier->phone)
-                            <a href="tel:{{ $delivery->courier->phone }}" class="inline-flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700">
+                            <a href="tel:{{ $delivery->courier->phone }}" class="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-700">
                                 <x-heroicon-o-phone class="w-4 h-4" />
                                 {{ $delivery->courier->phone }}
                             </a>

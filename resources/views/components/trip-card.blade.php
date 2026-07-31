@@ -18,7 +18,7 @@
         <p class="text-base font-semibold text-slate-900">{{ $fromName }}</p>
         <p class="text-sm text-slate-600 mt-1">{{ $fromAddress }}</p>
         @if($fromPhone)
-            <a href="tel:{{ $fromPhone }}" class="mt-3 inline-flex items-center gap-1.5 text-sm text-orange-600 hover:text-orange-700 font-medium">
+            <a href="tel:{{ $fromPhone }}" class="mt-3 inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 font-medium">
                 <x-heroicon-o-phone class="w-4 h-4" />
                 {{ $fromPhone }}
             </a>
@@ -49,7 +49,7 @@
         <p class="text-base font-semibold text-slate-900">{{ $toName }}</p>
         <p class="text-sm text-slate-600 mt-1">{{ $toAddress }}</p>
         @if($toPhone)
-            <a href="tel:{{ $toPhone }}" class="mt-3 inline-flex items-center gap-1.5 text-sm text-orange-600 hover:text-orange-700 font-medium">
+            <a href="tel:{{ $toPhone }}" class="mt-3 inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 font-medium">
                 <x-heroicon-o-phone class="w-4 h-4" />
                 {{ $toPhone }}
             </a>

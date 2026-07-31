@@ -110,7 +110,7 @@
                         <td class="px-4 py-3 text-slate-600 whitespace-nowrap">{{ optional($delivery->created_at)->format('Y-m-d') }}</td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <a href="{{ route('deliveries.show', $delivery) }}"
-                               class="text-orange-600 hover:text-orange-700 font-medium text-sm">
+                               class="text-red-600 hover:text-red-700 font-medium text-sm">
                                 View
                             </a>
                         </td>

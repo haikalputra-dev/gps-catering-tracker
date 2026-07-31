@@ -49,7 +49,7 @@
                         <td class="px-4 py-3 text-slate-600 whitespace-nowrap">{{ $device->last_seen_at?->diffForHumans() ?? 'Never' }}</td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <a href="{{ route('devices.show', $device) }}"
-                               class="text-orange-600 hover:text-orange-700 font-medium text-sm">
+                               class="text-red-600 hover:text-red-700 font-medium text-sm">
                                 View
                             </a>
                         </td>
