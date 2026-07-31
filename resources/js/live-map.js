@@ -220,7 +220,7 @@ export function initLiveMap(container) {
     };
 
     const poll = async () => {
-        if (stopped || inFlight) {
+        if (stopped || paused || inFlight) {
             return;
         }
         inFlight = true;
@@ -269,24 +269,44 @@ export function initLiveMap(container) {
         }
     };
 
-    // Kick off an immediate poll so the first courier fix arrives
-    // without waiting a full interval, then start the interval timer.
-    poll();
-    const timerId = window.setInterval(poll, cfg.interval);
+    // `stopped` = permanent (session expired / caller-invoked stop).
+    // `paused`  = reversible (tab hidden — resume when visible again).
+    let timerId = null;
+    let paused = false;
 
-    // Halt the poll loop when the page is hidden to avoid burning
-    // requests against the throttle when the tab is in the background.
+    const startPolling = () => {
+        if (stopped || paused) return;
+        if (timerId !== null) return;
+        poll();
+        timerId = window.setInterval(poll, cfg.interval);
+    };
+
+    const stopTimer = () => {
+        if (timerId !== null) {
+            window.clearInterval(timerId);
+            timerId = null;
+        }
+    };
+
+    startPolling();
+
+    // Pause the loop when the tab is hidden to avoid burning quota
+    // against the throttle, but resume automatically when the tab
+    // becomes visible again.
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
-            stopped = true;
-            window.clearInterval(timerId);
+            paused = true;
+            stopTimer();
+        } else {
+            paused = false;
+            startPolling();
         }
     });
 
     return {
         stop: () => {
             stopped = true;
-            window.clearInterval(timerId);
+            stopTimer();
         },
         lastLatLng: () => lastLatLng,
     };
