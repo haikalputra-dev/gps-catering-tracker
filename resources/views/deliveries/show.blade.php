@@ -3,6 +3,17 @@
     use App\Domain\Delivery\DeliveryStatus;
 
     $displayTz = config('delivery.receipt_date_timezone', 'Asia/Jakarta');
+    $statusValue = $delivery->status->value;
+    $isCourier = auth()->user()?->isCourier() ?? false;
+
+    $timestamps = [
+        'created_at'             => $delivery->created_at,
+        'scheduled_at_recorded'  => $delivery->scheduled_at_recorded ?? $delivery->scheduled_at,
+        'in_transit_at'          => $delivery->dispatched_at,
+        'delivered_at'           => $delivery->delivered_at,
+        'cancelled_at'           => $delivery->cancelled_at,
+        'cancellation_reason'    => $delivery->cancellation_reason,
+    ];
 @endphp
 @extends('layouts.app')
 
@@ -26,55 +37,72 @@
         </x-slot:actions>
     </x-page-header>
 
+    {{-- Progress steps --}}
+    <x-card>
+        <h2 class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-6">Progress</h2>
+        <x-progress-steps
+            :currentStatus="$delivery->status"
+            :timestamps="$timestamps"
+        />
+    </x-card>
+
+    {{-- Trip: from → to --}}
+    <div>
+        <h2 class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Trip</h2>
+        @if($delivery->status === DeliveryStatus::Draft)
+            <x-trip-card
+                :fromName="($delivery->kitchen?->code ? $delivery->kitchen->code . ' — ' : '') . ($delivery->kitchen?->name ?? '')"
+                :fromAddress="$delivery->kitchen?->address ?? ''"
+                :toName="$delivery->customer?->name ?? ''"
+                :toAddress="$delivery->customer?->address ?? ''"
+                :toPhone="$delivery->customer?->phone"
+                :distance="$delivery->distance_km"
+            />
+            <p class="text-xs text-slate-500 italic mt-2">
+                Live reference — snapshot will be captured at scheduling.
+            </p>
+        @else
+            <x-trip-card
+                :fromName="($delivery->kitchen_code ? $delivery->kitchen_code . ' — ' : '') . $delivery->kitchen_name"
+                :fromAddress="$delivery->kitchen_address"
+                :toName="$delivery->customer_name"
+                :toAddress="$delivery->customer_address"
+                :toPhone="$delivery->customer_phone"
+                :distance="$delivery->distance_km"
+            />
+            <p class="text-xs text-slate-500 mt-2">
+                Kitchen Lat/Lng: {{ $delivery->kitchen_latitude }}, {{ $delivery->kitchen_longitude }}
+                &middot;
+                Customer Lat/Lng: {{ $delivery->customer_latitude }}, {{ $delivery->customer_longitude }}
+            </p>
+        @endif
+    </div>
+
+    {{-- Courier + Schedule row --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <x-card title="Kitchen">
-            @if($delivery->status === DeliveryStatus::Draft)
-                <p class="text-xs text-slate-500 italic mb-2">Live reference (snapshot captured at scheduling):</p>
-                <p class="text-slate-900">
-                    <strong>{{ $delivery->kitchen?->code }}</strong> — {{ $delivery->kitchen?->name }}
-                </p>
-                <p class="text-slate-600 text-sm mt-1">{{ $delivery->kitchen?->address }}</p>
-            @else
-                <p class="text-slate-900">
-                    <strong>{{ $delivery->kitchen_code }}</strong> — {{ $delivery->kitchen_name }}
-                </p>
-                <p class="text-slate-600 text-sm mt-1">{{ $delivery->kitchen_address }}</p>
-                <p class="text-slate-500 text-xs mt-2">
-                    Lat/Lng: {{ $delivery->kitchen_latitude }}, {{ $delivery->kitchen_longitude }}
-                </p>
-            @endif
-        </x-card>
-
-        <x-card title="Customer">
-            @if($delivery->status === DeliveryStatus::Draft)
-                <p class="text-xs text-slate-500 italic mb-2">Live reference (snapshot captured at scheduling):</p>
-                <p class="text-slate-900">
-                    <strong>{{ $delivery->customer?->name }}</strong>
-                    <span class="text-slate-600">({{ $delivery->customer?->phone }})</span>
-                </p>
-                <p class="text-slate-600 text-sm mt-1">{{ $delivery->customer?->address }}</p>
-            @else
-                <p class="text-slate-900">
-                    <strong>{{ $delivery->customer_name }}</strong>
-                    <span class="text-slate-600">({{ $delivery->customer_phone }})</span>
-                </p>
-                <p class="text-slate-600 text-sm mt-1">{{ $delivery->customer_address }}</p>
-                <p class="text-slate-500 text-xs mt-2">
-                    Lat/Lng: {{ $delivery->customer_latitude }}, {{ $delivery->customer_longitude }}
-                </p>
-            @endif
-        </x-card>
-
         <x-card title="Courier">
             @if($delivery->courier)
-                <p class="text-slate-900">
-                    <strong>{{ $delivery->courier->name }}</strong>
-                    <span class="text-slate-500 text-sm">(#{{ $delivery->courier->id }})</span>
-                </p>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-semibold">
+                        {{ mb_strtoupper(mb_substr($delivery->courier->name, 0, 1)) }}
+                    </div>
+                    <div class="min-w-0">
+                        <p class="font-semibold text-slate-900">
+                            {{ $delivery->courier->name }}
+                            <span class="text-slate-500 text-sm font-normal">(#{{ $delivery->courier->id }})</span>
+                        </p>
+                        @if($delivery->courier->phone)
+                            <a href="tel:{{ $delivery->courier->phone }}" class="inline-flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700">
+                                <x-heroicon-o-phone class="w-4 h-4" />
+                                {{ $delivery->courier->phone }}
+                            </a>
+                        @endif
+                    </div>
+                </div>
             @else
                 <p class="text-slate-500 italic text-sm">No courier assigned yet.</p>
             @endif
-            <dl class="mt-3 space-y-1.5 text-sm">
+            <dl class="mt-4 space-y-1.5 text-sm">
                 <div class="flex gap-2">
                     <dt class="font-medium text-slate-700 w-32">Dispatched at:</dt>
                     <dd class="text-slate-900">
@@ -128,7 +156,7 @@
         DOM-absent (not CSS-hidden) so the fee never reaches the browser
         for a courier session.
     --}}
-    @if(!auth()->user()?->isCourier())
+    @if(! $isCourier)
         <x-card title="Pricing">
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div class="flex items-baseline gap-2">
@@ -166,22 +194,39 @@
         there is no live position to show. The map polls
         `deliveries.telemetry.latest` at the interval declared by
         `config('telemetry.polling_interval_ms')`.
+
+        The map <div> below is test-locked and consumed by resources/js/live-map.js.
+        Do NOT change its id or data-* attributes without a coordinated JS update.
     --}}
     @php
         $liveStatuses = [DeliveryStatus::Scheduled, DeliveryStatus::InTransit];
     @endphp
     @if(in_array($delivery->status, $liveStatuses, true))
-        <x-card title="Live position">
+        <x-card>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <x-heroicon-o-map class="w-5 h-5 text-slate-500" />
+                    Live position
+                </h2>
+                <span class="text-xs text-slate-500">
+                    @if($delivery->status === DeliveryStatus::Scheduled)
+                        Awaiting dispatch
+                    @else
+                        Auto-refreshing every {{ (int) (config('telemetry.polling_interval_ms', 3000) / 1000) }}s
+                    @endif
+                </span>
+            </div>
             <p class="text-sm text-slate-500 mb-3">
                 @if($delivery->status === DeliveryStatus::Scheduled)
-                    Awaiting dispatch — the courier marker appears once the delivery starts.
+                    The courier marker appears once the delivery starts.
                 @else
-                    Auto-refreshing every {{ (int) (config('telemetry.polling_interval_ms', 3000) / 1000) }}s.
+                    The courier's live position updates automatically.
                 @endif
             </p>
             <div
                 id="delivery-live-map"
                 class="live-map-container rounded-lg overflow-hidden border border-slate-200"
+                style="height: 500px;"
                 data-live-map
                 data-endpoint="{{ route('deliveries.telemetry.latest', $delivery) }}"
                 data-interval="{{ (int) config('telemetry.polling_interval_ms', 3000) }}"
