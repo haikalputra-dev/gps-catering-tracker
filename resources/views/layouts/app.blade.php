@@ -140,6 +140,13 @@
     @include('partials._flash_toasts')
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        @auth
+            @unless(request()->routeIs('dashboard') || request()->routeIs('*.dashboard'))
+                <div class="mb-4">
+                    <x-back-link :fallback="route('dashboard')" />
+                </div>
+            @endunless
+        @endauth
         <div class="space-y-6">
             @yield('content')
         </div>

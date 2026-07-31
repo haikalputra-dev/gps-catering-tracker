@@ -28,6 +28,14 @@
                     <x-button type="submit" class="w-full justify-center">Log in</x-button>
                 </div>
             </form>
+
+            <div class="mt-6 pt-6 border-t border-slate-200 text-center">
+                <a href="{{ url('/') }}"
+                   class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-2 py-1">
+                    <x-heroicon-o-arrow-left class="w-4 h-4" aria-hidden="true" />
+                    Back to home
+                </a>
+            </div>
         </x-card>
     </div>
 @endsection
