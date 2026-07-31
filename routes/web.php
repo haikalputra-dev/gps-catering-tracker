@@ -53,7 +53,7 @@ Route::get('/track/telemetry/latest', [TrackingTelemetryController::class, 'late
     ->middleware('throttle:60,1')
     ->name('tracking.telemetry.latest');
 
-Route::middleware(['auth', 'active'])->group(function (): void {
+Route::middleware(['auth', 'active', 'no.cache'])->group(function (): void {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/owner/dashboard', [DashboardController::class, 'owner'])

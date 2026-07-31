@@ -38,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => \App\Http\Middleware\EnsureUserIsActive::class,
             'role' => \App\Http\Middleware\RequireRole::class,
             'device.auth' => \App\Http\Middleware\AuthenticateDeviceToken::class,
+            'no.cache' => \App\Http\Middleware\PreventBackButtonCache::class,
         ]);
 
         // Laravel's default middleware priority runs ThrottleRequests

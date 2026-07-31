@@ -12,7 +12,13 @@
     <header class="bg-white border-b border-slate-200 py-5">
         <div class="max-w-3xl mx-auto px-4 relative flex items-center justify-center gap-2">
             <div class="absolute left-4">
-                <x-back-link :fallback="url('/')" label="Home" />
+                <a
+                    href="{{ url('/') }}"
+                    class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-2 py-1"
+                >
+                    <x-heroicon-o-home class="w-4 h-4" aria-hidden="true" />
+                    Home
+                </a>
             </div>
             <a href="{{ url('/') }}" class="flex items-center gap-2">
                 <svg class="w-6 h-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
